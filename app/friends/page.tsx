@@ -67,6 +67,10 @@ export default function FriendsPage() {
     setLoading(false);
   }
 
+  // ========================================
+  // LOAD FRIENDS
+  // ========================================
+
   async function loadFriends(id: string) {
     const { data, error } = await supabase
       .from("friendships")
@@ -74,7 +78,7 @@ export default function FriendsPage() {
       .or(`user_id.eq.${id},friend_id.eq.${id}`);
 
     if (error) {
-      console.error("Friends error:", error);
+      console.error("❌ Friends error:", error);
       setFriends([]);
       return;
     }
@@ -90,25 +94,32 @@ export default function FriendsPage() {
       return;
     }
 
-    const { data: profiles, error: profilesError } =
-      await supabase
-        .from("profiles")
-        .select(
-          "id, username, display_name, avatar_url"
-        )
-        .in("id", friendIds);
+    const {
+      data: profiles,
+      error: profilesError,
+    } = await supabase
+      .from("profiles")
+      .select(
+        "id, username, display_name, avatar_url"
+      )
+      .in("id", friendIds);
 
     if (profilesError) {
       console.error(
-        "Friend profiles error:",
+        "❌ Friend profiles error:",
         profilesError
       );
+
       setFriends([]);
       return;
     }
 
     setFriends(profiles || []);
   }
+
+  // ========================================
+  // LOAD REQUESTS
+  // ========================================
 
   async function loadRequests(id: string) {
     const { data, error } = await supabase
@@ -120,7 +131,11 @@ export default function FriendsPage() {
       });
 
     if (error) {
-      console.error("Requests error:", error);
+      console.error(
+        "❌ Requests error:",
+        error
+      );
+
       setRequests([]);
       setSentRequests([]);
       return;
@@ -152,13 +167,22 @@ export default function FriendsPage() {
     let profiles: Profile[] = [];
 
     if (profileIds.length > 0) {
-      const { data: profileData } =
-        await supabase
-          .from("profiles")
-          .select(
-            "id, username, display_name, avatar_url"
-          )
-          .in("id", profileIds);
+      const {
+        data: profileData,
+        error: profileError,
+      } = await supabase
+        .from("profiles")
+        .select(
+          "id, username, display_name, avatar_url"
+        )
+        .in("id", profileIds);
+
+      if (profileError) {
+        console.error(
+          "❌ Request profile error:",
+          profileError
+        );
+      }
 
       profiles = profileData || [];
     }
@@ -183,9 +207,18 @@ export default function FriendsPage() {
         ),
       }));
 
-    setRequests(attachProfiles(incoming));
-    setSentRequests(attachProfiles(outgoing));
+    setRequests(
+      attachProfiles(incoming)
+    );
+
+    setSentRequests(
+      attachProfiles(outgoing)
+    );
   }
+
+  // ========================================
+  // SEARCH USERS
+  // ========================================
 
   async function searchUsers() {
     const query = search.trim();
@@ -195,62 +228,103 @@ export default function FriendsPage() {
       return;
     }
 
+    if (!userId) {
+      return;
+    }
+
     setSearching(true);
 
-    const { data, error } = await supabase
+    const {
+      data,
+      error,
+    } = await supabase
       .from("profiles")
       .select(
         "id, username, display_name, avatar_url"
       )
-      .ilike("username", `%${query}%`)
+      .ilike(
+        "username",
+        `%${query}%`
+      )
       .limit(20);
 
     if (error) {
-      console.error("Search error:", error);
+      console.error(
+        "❌ Search error:",
+        error
+      );
+
+      setResults([]);
       setSearching(false);
       return;
     }
 
     setResults(
       (data || []).filter(
-        (profile) => profile.id !== userId
+        (profile) =>
+          profile.id !== userId
       )
     );
 
     setSearching(false);
   }
 
-  async function sendRequest(receiverId: string) {
-    if (!userId) return;
+  // ========================================
+  // SEND FRIEND REQUEST
+  // ========================================
 
-    // უკვე მეგობარია?
+  async function sendRequest(
+    receiverId: string
+  ) {
+    if (!userId) {
+      alert("You must be logged in.");
+      return;
+    }
+
+    if (receiverId === userId) {
+      alert(
+        "You cannot send yourself a friend request."
+      );
+      return;
+    }
+
+    // Already friends?
     const alreadyFriend = friends.some(
-      (friend) => friend.id === receiverId
+      (friend) =>
+        friend.id === receiverId
     );
 
     if (alreadyFriend) {
-      alert("You are already friends.");
+      alert(
+        "You are already friends."
+      );
       return;
     }
 
-    // უკვე გაგზავნილია?
-    const alreadySent = sentRequests.some(
-      (request) =>
-        request.receiver_id === receiverId &&
-        request.status === "pending"
-    );
+    // Already sent?
+    const alreadySent =
+      sentRequests.some(
+        (request) =>
+          request.receiver_id ===
+            receiverId &&
+          request.status === "pending"
+      );
 
     if (alreadySent) {
-      alert("Friend request already sent.");
+      alert(
+        "Friend request already sent."
+      );
       return;
     }
 
-    // მეორე მომხმარებელმა ხომ არ გამოგიგზავნა?
-    const incomingRequest = requests.some(
-      (request) =>
-        request.sender_id === receiverId &&
-        request.status === "pending"
-    );
+    // Incoming request exists?
+    const incomingRequest =
+      requests.some(
+        (request) =>
+          request.sender_id ===
+            receiverId &&
+          request.status === "pending"
+      );
 
     if (incomingRequest) {
       alert(
@@ -259,66 +333,125 @@ export default function FriendsPage() {
       return;
     }
 
-    const { error } = await supabase
+    console.log(
+      "🔥 Sending friend request:",
+      {
+        sender_id: userId,
+        receiver_id: receiverId,
+      }
+    );
+
+    const {
+      data,
+      error,
+    } = await supabase
       .from("friend_requests")
       .insert({
         sender_id: userId,
         receiver_id: receiverId,
         status: "pending",
-      });
+      })
+      .select()
+      .single();
 
     if (error) {
       console.error(
-        "Send request error:",
+        "❌ Send request error:",
         error
       );
 
-      alert("Could not send friend request.");
+      console.error(
+        "❌ Error message:",
+        error.message
+      );
+
+      console.error(
+        "❌ Error code:",
+        error.code
+      );
+
+      console.error(
+        "❌ Error details:",
+        error.details
+      );
+
+      console.error(
+        "❌ Error hint:",
+        error.hint
+      );
+
+      alert(
+        `Could not send friend request.\n\n${error.message}`
+      );
+
       return;
     }
 
-    alert("Friend request sent!");
+    console.log(
+      "✅ Friend request created:",
+      data
+    );
+
+    alert(
+      "Friend request sent! 🎉"
+    );
 
     await loadRequests(userId);
   }
 
+  // ========================================
+  // ACCEPT REQUEST
+  // ========================================
+
   async function acceptRequest(
     request: FriendRequest
   ) {
-    if (!userId) return;
-
-    const { error: updateError } =
-      await supabase
-        .from("friend_requests")
-        .update({
-          status: "accepted",
-        })
-        .eq("id", request.id)
-        .eq("receiver_id", userId);
-
-    if (updateError) {
-      console.error(updateError);
-      alert("Could not accept request.");
+    if (!userId) {
       return;
     }
 
-    // ერთი friendship record საკმარისია,
-    // რადგან loadFriends ორივე მიმართულებას ამოწმებს.
-    const { error: friendshipError } =
-      await supabase
-        .from("friendships")
-        .insert({
-          user_id: request.sender_id,
-          friend_id: request.receiver_id,
-        });
+    const {
+      error: updateError,
+    } = await supabase
+      .from("friend_requests")
+      .update({
+        status: "accepted",
+      })
+      .eq("id", request.id)
+      .eq("receiver_id", userId);
+
+    if (updateError) {
+      console.error(
+        "❌ Accept request error:",
+        updateError
+      );
+
+      alert(
+        `Could not accept request.\n\n${updateError.message}`
+      );
+
+      return;
+    }
+
+    const {
+      error: friendshipError,
+    } = await supabase
+      .from("friendships")
+      .insert({
+        user_id: request.sender_id,
+        friend_id: request.receiver_id,
+      });
 
     if (friendshipError) {
       console.error(
-        "Friendship error:",
+        "❌ Friendship error:",
         friendshipError
       );
 
-      alert("Could not create friendship.");
+      alert(
+        `Could not create friendship.\n\n${friendshipError.message}`
+      );
+
       return;
     }
 
@@ -326,10 +459,16 @@ export default function FriendsPage() {
     await loadRequests(userId);
   }
 
+  // ========================================
+  // DECLINE REQUEST
+  // ========================================
+
   async function declineRequest(
     requestId: string
   ) {
-    if (!userId) return;
+    if (!userId) {
+      return;
+    }
 
     const { error } = await supabase
       .from("friend_requests")
@@ -340,17 +479,31 @@ export default function FriendsPage() {
       .eq("receiver_id", userId);
 
     if (error) {
-      console.error(error);
+      console.error(
+        "❌ Decline request error:",
+        error
+      );
+
+      alert(
+        `Could not decline request.\n\n${error.message}`
+      );
+
       return;
     }
 
     await loadRequests(userId);
   }
 
+  // ========================================
+  // CANCEL REQUEST
+  // ========================================
+
   async function cancelRequest(
     requestId: string
   ) {
-    if (!userId) return;
+    if (!userId) {
+      return;
+    }
 
     const { error } = await supabase
       .from("friend_requests")
@@ -359,15 +512,31 @@ export default function FriendsPage() {
       .eq("sender_id", userId);
 
     if (error) {
-      console.error(error);
+      console.error(
+        "❌ Cancel request error:",
+        error
+      );
+
+      alert(
+        `Could not cancel request.\n\n${error.message}`
+      );
+
       return;
     }
 
     await loadRequests(userId);
   }
 
-  async function removeFriend(friendId: string) {
-    if (!userId) return;
+  // ========================================
+  // REMOVE FRIEND
+  // ========================================
+
+  async function removeFriend(
+    friendId: string
+  ) {
+    if (!userId) {
+      return;
+    }
 
     const { error } = await supabase
       .from("friendships")
@@ -377,12 +546,24 @@ export default function FriendsPage() {
       );
 
     if (error) {
-      console.error(error);
+      console.error(
+        "❌ Remove friend error:",
+        error
+      );
+
+      alert(
+        `Could not remove friend.\n\n${error.message}`
+      );
+
       return;
     }
 
     await loadFriends(userId);
   }
+
+  // ========================================
+  // AVATAR
+  // ========================================
 
   function avatar(profile: {
     username: string;
@@ -407,23 +588,35 @@ export default function FriendsPage() {
     );
   }
 
+  // ========================================
+  // UI
+  // ========================================
+
   return (
     <main className="min-h-screen bg-[#080b14] text-white">
       {/* HEADER */}
+
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0c101b]/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <button
-            onClick={() => router.push("/")}
+            onClick={() =>
+              router.push("/")
+            }
             className="text-3xl font-black"
           >
-            <span className="text-white">N</span>
+            <span className="text-white">
+              N
+            </span>
+
             <span className="text-blue-500">
               ova
             </span>
           </button>
 
           <button
-            onClick={() => router.push("/")}
+            onClick={() =>
+              router.push("/")
+            }
             className="rounded-xl px-4 py-2 text-sm font-bold text-gray-400 transition hover:bg-white/5 hover:text-white"
           >
             ← Home
@@ -433,6 +626,7 @@ export default function FriendsPage() {
 
       <section className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
         {/* TITLE */}
+
         <div>
           <h1 className="text-4xl font-black sm:text-5xl">
             👥 Friends
@@ -445,6 +639,7 @@ export default function FriendsPage() {
         </div>
 
         {/* SEARCH */}
+
         <div className="mt-8 rounded-3xl border border-white/10 bg-[#0d121f] p-5">
           <h2 className="text-lg font-black">
             🔎 Find People
@@ -477,79 +672,86 @@ export default function FriendsPage() {
           </div>
 
           {/* SEARCH RESULTS */}
+
           {results.length > 0 && (
             <div className="mt-5 space-y-3">
-              {results.map((profile) => {
-                const alreadyFriend =
-                  friends.some(
-                    (friend) =>
-                      friend.id === profile.id
-                  );
+              {results.map(
+                (profile) => {
+                  const alreadyFriend =
+                    friends.some(
+                      (friend) =>
+                        friend.id ===
+                        profile.id
+                    );
 
-                const pending =
-                  sentRequests.some(
-                    (request) =>
-                      request.receiver_id ===
-                        profile.id &&
-                      request.status === "pending"
-                  );
+                  const pending =
+                    sentRequests.some(
+                      (request) =>
+                        request.receiver_id ===
+                          profile.id &&
+                        request.status ===
+                          "pending"
+                    );
 
-                return (
-                  <div
-                    key={profile.id}
-                    className="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#080b14] p-3"
-                  >
-                    <div className="h-12 w-12 overflow-hidden rounded-full">
-                      {avatar(profile)}
-                    </div>
+                  return (
+                    <div
+                      key={profile.id}
+                      className="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#080b14] p-3"
+                    >
+                      <div className="h-12 w-12 overflow-hidden rounded-full">
+                        {avatar(profile)}
+                      </div>
 
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-black">
-                        {profile.username}
-                      </p>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-black">
+                          {profile.username}
+                        </p>
 
-                      <p className="truncate text-xs text-gray-500">
-                        {profile.display_name}
-                      </p>
-                    </div>
+                        <p className="truncate text-xs text-gray-500">
+                          {profile.display_name}
+                        </p>
+                      </div>
 
-                    {alreadyFriend ? (
-                      <span className="rounded-xl bg-green-500/10 px-4 py-2 text-xs font-black text-green-400">
-                        ✓ Friends
-                      </span>
-                    ) : pending ? (
-                      <button
-                        onClick={() => {
-                          const request =
-                            sentRequests.find(
-                              (item) =>
-                                item.receiver_id ===
-                                profile.id
-                            );
+                      {alreadyFriend ? (
+                        <span className="rounded-xl bg-green-500/10 px-4 py-2 text-xs font-black text-green-400">
+                          ✓ Friends
+                        </span>
+                      ) : pending ? (
+                        <button
+                          onClick={() => {
+                            const request =
+                              sentRequests.find(
+                                (item) =>
+                                  item.receiver_id ===
+                                  profile.id
+                              );
 
-                          if (request) {
-                            cancelRequest(
-                              request.id
-                            );
+                            if (request) {
+                              cancelRequest(
+                                request.id
+                              );
+                            }
+                          }}
+                          className="rounded-xl bg-yellow-500/10 px-4 py-2 text-xs font-black text-yellow-400 transition hover:bg-yellow-500/20"
+                        >
+                          Pending
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() =>
+                            sendRequest(
+                              profile.id
+                            )
                           }
-                        }}
-                        className="rounded-xl bg-yellow-500/10 px-4 py-2 text-xs font-black text-yellow-400 transition hover:bg-yellow-500/20"
-                      >
-                        Pending
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() =>
-                          sendRequest(profile.id)
-                        }
-                        className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-black text-white transition hover:bg-blue-500"
-                      >
-                        + Add Friend
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
+                          className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-black text-white transition hover:bg-blue-500"
+                        >
+                          + Add Friend
+                        </button>
+                      )}
+                    </div>
+                  );
+                }
+              )}
             </div>
           )}
 
@@ -563,6 +765,7 @@ export default function FriendsPage() {
         </div>
 
         {/* FRIEND REQUESTS */}
+
         <div className="mt-8">
           <div className="flex items-center justify-between">
             <div>
@@ -595,59 +798,65 @@ export default function FriendsPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {requests.map((request) => (
-                  <div
-                    key={request.id}
-                    className="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#080b14] p-3"
-                  >
-                    {request.sender && (
-                      <div className="h-12 w-12 overflow-hidden rounded-full">
-                        {avatar(
-                          request.sender
-                        )}
+                {requests.map(
+                  (request) => (
+                    <div
+                      key={request.id}
+                      className="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#080b14] p-3"
+                    >
+                      {request.sender && (
+                        <div className="h-12 w-12 overflow-hidden rounded-full">
+                          {avatar(
+                            request.sender
+                          )}
+                        </div>
+                      )}
+
+                      <div className="min-w-0 flex-1">
+                        <p className="font-black">
+                          {request.sender
+                            ?.username ||
+                            "User"}
+                        </p>
+
+                        <p className="text-xs text-gray-500">
+                          sent you a friend request
+                        </p>
                       </div>
-                    )}
 
-                    <div className="min-w-0 flex-1">
-                      <p className="font-black">
-                        {request.sender
-                          ?.username || "User"}
-                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() =>
+                            acceptRequest(
+                              request
+                            )
+                          }
+                          className="rounded-xl bg-green-500 px-4 py-2 text-xs font-black text-white transition hover:bg-green-600"
+                        >
+                          Accept
+                        </button>
 
-                      <p className="text-xs text-gray-500">
-                        sent you a friend request
-                      </p>
+                        <button
+                          onClick={() =>
+                            declineRequest(
+                              request.id
+                            )
+                          }
+                          className="rounded-xl bg-white/5 px-4 py-2 text-xs font-black text-gray-400 transition hover:bg-white/10"
+                        >
+                          Decline
+                        </button>
+                      </div>
                     </div>
-
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() =>
-                          acceptRequest(request)
-                        }
-                        className="rounded-xl bg-green-500 px-4 py-2 text-xs font-black text-white transition hover:bg-green-600"
-                      >
-                        Accept
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          declineRequest(
-                            request.id
-                          )
-                        }
-                        className="rounded-xl bg-white/5 px-4 py-2 text-xs font-black text-gray-400 transition hover:bg-white/10"
-                      >
-                        Decline
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  )
+                )}
               </div>
             )}
           </div>
         </div>
 
         {/* SENT REQUESTS */}
+
         <div className="mt-8">
           <h2 className="text-2xl font-black">
             Sent Requests
@@ -662,46 +871,52 @@ export default function FriendsPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {sentRequests.map((request) => (
-                  <div
-                    key={request.id}
-                    className="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#080b14] p-3"
-                  >
-                    {request.receiver && (
-                      <div className="h-12 w-12 overflow-hidden rounded-full">
-                        {avatar(
-                          request.receiver
-                        )}
-                      </div>
-                    )}
-
-                    <div className="min-w-0 flex-1">
-                      <p className="font-black">
-                        {request.receiver
-                          ?.username || "User"}
-                      </p>
-
-                      <p className="text-xs text-yellow-500">
-                        Waiting for response
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={() =>
-                        cancelRequest(request.id)
-                      }
-                      className="rounded-xl bg-white/5 px-4 py-2 text-xs font-bold text-gray-400 transition hover:bg-red-500/10 hover:text-red-400"
+                {sentRequests.map(
+                  (request) => (
+                    <div
+                      key={request.id}
+                      className="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#080b14] p-3"
                     >
-                      Cancel
-                    </button>
-                  </div>
-                ))}
+                      {request.receiver && (
+                        <div className="h-12 w-12 overflow-hidden rounded-full">
+                          {avatar(
+                            request.receiver
+                          )}
+                        </div>
+                      )}
+
+                      <div className="min-w-0 flex-1">
+                        <p className="font-black">
+                          {request.receiver
+                            ?.username ||
+                            "User"}
+                        </p>
+
+                        <p className="text-xs text-yellow-500">
+                          Waiting for response
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() =>
+                          cancelRequest(
+                            request.id
+                          )
+                        }
+                        className="rounded-xl bg-white/5 px-4 py-2 text-xs font-bold text-gray-400 transition hover:bg-red-500/10 hover:text-red-400"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )
+                )}
               </div>
             )}
           </div>
         </div>
 
         {/* MY FRIENDS */}
+
         <div className="mt-8 pb-10">
           <div>
             <h2 className="text-2xl font-black">
@@ -710,7 +925,9 @@ export default function FriendsPage() {
 
             <p className="mt-1 text-sm text-gray-500">
               {friends.length} friend
-              {friends.length === 1 ? "" : "s"}
+              {friends.length === 1
+                ? ""
+                : "s"}
             </p>
           </div>
 
@@ -750,33 +967,37 @@ export default function FriendsPage() {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-                {friends.map((friend) => (
-                  <div
-                    key={friend.id}
-                    className="rounded-3xl border border-white/10 bg-[#0d121f] p-5 text-center transition hover:-translate-y-1 hover:border-blue-500/30"
-                  >
-                    <div className="mx-auto h-20 w-20 overflow-hidden rounded-full">
-                      {avatar(friend)}
-                    </div>
-
-                    <p className="mt-4 truncate font-black">
-                      {friend.username}
-                    </p>
-
-                    <p className="mt-1 truncate text-xs text-gray-500">
-                      {friend.display_name}
-                    </p>
-
-                    <button
-                      onClick={() =>
-                        removeFriend(friend.id)
-                      }
-                      className="mt-4 w-full rounded-xl bg-white/5 px-3 py-2 text-xs font-bold text-gray-500 transition hover:bg-red-500/10 hover:text-red-400"
+                {friends.map(
+                  (friend) => (
+                    <div
+                      key={friend.id}
+                      className="rounded-3xl border border-white/10 bg-[#0d121f] p-5 text-center transition hover:-translate-y-1 hover:border-blue-500/30"
                     >
-                      Remove Friend
-                    </button>
-                  </div>
-                ))}
+                      <div className="mx-auto h-20 w-20 overflow-hidden rounded-full">
+                        {avatar(friend)}
+                      </div>
+
+                      <p className="mt-4 truncate font-black">
+                        {friend.username}
+                      </p>
+
+                      <p className="mt-1 truncate text-xs text-gray-500">
+                        {friend.display_name}
+                      </p>
+
+                      <button
+                        onClick={() =>
+                          removeFriend(
+                            friend.id
+                          )
+                        }
+                        className="mt-4 w-full rounded-xl bg-white/5 px-3 py-2 text-xs font-bold text-gray-500 transition hover:bg-red-500/10 hover:text-red-400"
+                      >
+                        Remove Friend
+                      </button>
+                    </div>
+                  )
+                )}
               </div>
             )}
           </div>
