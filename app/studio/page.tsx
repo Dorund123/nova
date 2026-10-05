@@ -1,17 +1,27 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
 import { useSearchParams, useRouter } from "next/navigation";
+
 import { Canvas, useThree } from "@react-three/fiber";
+
 import {
   OrbitControls,
   Grid,
   TransformControls,
   Environment,
 } from "@react-three/drei";
+
 import * as THREE from "three";
 
-// ✅ FIXED: correct path from app/studio/page.tsx
+// ✅ correct path from app/studio/page.tsx
 import { supabase } from ".././lib/supabase";
 
 type Tool = "select" | "move" | "rotate" | "scale";
@@ -812,10 +822,10 @@ function WorldScene({
 }
 
 /* =========================
-   STUDIO
+   STUDIO CONTENT
 ========================= */
 
-export default function StudioPage() {
+function StudioContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -884,9 +894,11 @@ export default function StudioPage() {
 
         if (error) {
           console.error(error);
+
           setMessage(
             "Could not load this world."
           );
+
           setLoading(false);
           return;
         }
@@ -895,6 +907,7 @@ export default function StudioPage() {
           setMessage(
             "You do not own this world."
           );
+
           setLoading(false);
           return;
         }
@@ -911,6 +924,7 @@ export default function StudioPage() {
         }
       } catch (error) {
         console.error(error);
+
         setMessage(
           "Something went wrong."
         );
@@ -1080,6 +1094,7 @@ export default function StudioPage() {
 
       if (error) {
         console.error(error);
+
         setMessage("Save failed.");
         return;
       }
@@ -1093,6 +1108,7 @@ export default function StudioPage() {
       }, 2500);
     } catch (error) {
       console.error(error);
+
       setMessage("Save failed.");
     } finally {
       setSaving(false);
@@ -1208,9 +1224,7 @@ export default function StudioPage() {
               : "💾 Save"}
           </button>
 
-          {/* =========================
-              PLAY BUTTON
-          ========================= */}
+          {/* PLAY BUTTON */}
 
           <button
             onClick={() => {
@@ -1539,11 +1553,44 @@ export default function StudioPage() {
                 >
                   Delete
                 </button>
+
               </div>
             )}
           </div>
         </aside>
       </div>
     </main>
+  );
+}
+
+/* =========================
+   LOADING
+========================= */
+
+function StudioLoading() {
+  return (
+    <main className="min-h-screen bg-[#070a12] text-white flex items-center justify-center">
+      <div className="text-center">
+        <div className="text-blue-500 text-2xl font-bold">
+          NOVA STUDIO
+        </div>
+
+        <div className="text-gray-400 mt-3">
+          Loading Studio...
+        </div>
+      </div>
+    </main>
+  );
+}
+
+/* =========================
+   PAGE
+========================= */
+
+export default function StudioPage() {
+  return (
+    <Suspense fallback={<StudioLoading />}>
+      <StudioContent />
+    </Suspense>
   );
 }
