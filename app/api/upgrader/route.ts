@@ -65,7 +65,7 @@ export async function POST(request: Request) {
       process.env.NEXT_PUBLIC_SUPABASE_URL;
 
     const anonKey =
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
     console.log("🔥 SUPABASE ENV:", {
       hasUrl: Boolean(supabaseUrl),
@@ -76,8 +76,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            "Supabase configuration is missing.",
+          error: "Supabase configuration is missing.",
         },
         { status: 500 }
       );
