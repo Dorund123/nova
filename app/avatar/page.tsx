@@ -36,7 +36,7 @@ function Hair({
   if (gender === "boy") {
     return (
       <group>
-        {/* TOP HAIR */}
+        {/* Main hair */}
         <mesh
           position={[0, 3.35, -0.08]}
           scale={[1.02, 0.62, 0.98]}
@@ -48,11 +48,11 @@ function Hair({
           />
         </mesh>
 
-        {/* FRONT HAIR */}
+        {/* Front hair */}
         {[-0.28, 0, 0.28].map((x) => (
           <mesh
             key={x}
-            position={[x, 3.16, 0.42]}
+            position={[x, 3.15, 0.42]}
             rotation={[-0.15, 0, x * 0.2]}
           >
             <sphereGeometry args={[0.15, 20, 16]} />
@@ -68,7 +68,7 @@ function Hair({
 
   return (
     <group>
-      {/* GIRL TOP HAIR */}
+      {/* Girl hair */}
       <mesh
         position={[0, 3.35, -0.08]}
         scale={[1.04, 0.66, 1]}
@@ -80,7 +80,6 @@ function Hair({
         />
       </mesh>
 
-      {/* LEFT LONG HAIR */}
       <mesh
         position={[-0.52, 2.65, -0.12]}
         scale={[0.75, 1.45, 0.68]}
@@ -92,7 +91,6 @@ function Hair({
         />
       </mesh>
 
-      {/* RIGHT LONG HAIR */}
       <mesh
         position={[0.52, 2.65, -0.12]}
         scale={[0.75, 1.45, 0.68]}
@@ -104,7 +102,6 @@ function Hair({
         />
       </mesh>
 
-      {/* FRONT HAIR */}
       {[-0.28, 0, 0.28].map((x) => (
         <mesh
           key={x}
@@ -128,6 +125,8 @@ function Face({
   gender: Gender;
   skin: string;
 }) {
+  const isBoy = gender === "boy";
+
   return (
     <group>
       {/* EARS */}
@@ -141,117 +140,179 @@ function Face({
         <meshStandardMaterial color={skin} />
       </mesh>
 
-      {/* BIG SOFT EYES */}
+      {/* EYES */}
       <mesh position={[-0.22, 3.09, 0.67]}>
-        <sphereGeometry args={[0.095, 28, 28]} />
+        <sphereGeometry
+          args={[isBoy ? 0.078 : 0.095, 26, 26]}
+        />
         <meshStandardMaterial color="#111111" />
       </mesh>
 
       <mesh position={[0.22, 3.09, 0.67]}>
-        <sphereGeometry args={[0.095, 28, 28]} />
+        <sphereGeometry
+          args={[isBoy ? 0.078 : 0.095, 26, 26]}
+        />
         <meshStandardMaterial color="#111111" />
       </mesh>
 
       {/* EYE HIGHLIGHTS */}
       <mesh position={[-0.19, 3.13, 0.745]}>
-        <sphereGeometry args={[0.028, 14, 14]} />
+        <sphereGeometry args={[0.025, 14, 14]} />
         <meshStandardMaterial color="#ffffff" />
       </mesh>
 
       <mesh position={[0.25, 3.13, 0.745]}>
-        <sphereGeometry args={[0.028, 14, 14]} />
+        <sphereGeometry args={[0.025, 14, 14]} />
         <meshStandardMaterial color="#ffffff" />
       </mesh>
 
       {/* EYEBROWS */}
       <RoundedBox
         position={[-0.22, 3.29, 0.63]}
-        args={[0.25, 0.035, 0.03]}
-        radius={0.01}
+        args={[
+          isBoy ? 0.28 : 0.25,
+          isBoy ? 0.06 : 0.035,
+          0.03,
+        ]}
+        radius={0.012}
         smoothness={3}
-        rotation={[0, 0, -0.05]}
+        rotation={[0, 0, isBoy ? -0.08 : -0.05]}
       >
-        <meshStandardMaterial color="#4a3024" />
+        <meshStandardMaterial
+          color={isBoy ? "#241812" : "#4a3024"}
+        />
       </RoundedBox>
 
       <RoundedBox
         position={[0.22, 3.29, 0.63]}
-        args={[0.25, 0.035, 0.03]}
-        radius={0.01}
+        args={[
+          isBoy ? 0.28 : 0.25,
+          isBoy ? 0.06 : 0.035,
+          0.03,
+        ]}
+        radius={0.012}
         smoothness={3}
-        rotation={[0, 0, 0.05]}
+        rotation={[0, 0, isBoy ? 0.08 : 0.05]}
       >
-        <meshStandardMaterial color="#4a3024" />
+        <meshStandardMaterial
+          color={isBoy ? "#241812" : "#4a3024"}
+        />
       </RoundedBox>
 
-      {/* SMALL NOSE */}
+      {/* NOSE */}
       <mesh position={[0, 2.94, 0.69]}>
-        <sphereGeometry args={[0.055, 20, 20]} />
+        <sphereGeometry
+          args={[isBoy ? 0.07 : 0.055, 20, 20]}
+        />
         <meshStandardMaterial color={skin} />
       </mesh>
 
-      {/* NOSE TIP */}
       <mesh position={[0, 2.91, 0.73]}>
         <sphereGeometry args={[0.038, 16, 16]} />
         <meshStandardMaterial color={skin} />
       </mesh>
 
-      {/* LIPS */}
+      {/* MOUTH */}
       <RoundedBox
         position={[0, 2.75, 0.665]}
         args={[
-          gender === "girl" ? 0.24 : 0.22,
-          0.045,
+          isBoy ? 0.21 : 0.24,
+          0.04,
           0.03,
         ]}
-        radius={0.018}
+        radius={0.014}
         smoothness={4}
       >
         <meshStandardMaterial
-          color={
-            gender === "girl"
-              ? "#b85c72"
-              : "#a45465"
-          }
+          color={isBoy ? "#8f4b57" : "#b85c72"}
           roughness={0.5}
         />
       </RoundedBox>
 
-      {/* LOWER LIP */}
-      <RoundedBox
-        position={[0, 2.72, 0.67]}
-        args={[0.14, 0.025, 0.025]}
-        radius={0.012}
-        smoothness={3}
-      >
-        <meshStandardMaterial
-          color={
-            gender === "girl"
-              ? "#c66a7e"
-              : "#b25b6c"
-          }
-          roughness={0.5}
-        />
-      </RoundedBox>
+      {/* ================= BOY BEARD ================= */}
+      {isBoy && (
+        <group>
+          {/* Mustache */}
+          <RoundedBox
+            position={[-0.08, 2.79, 0.69]}
+            args={[0.12, 0.045, 0.035]}
+            radius={0.015}
+            smoothness={3}
+            rotation={[0, 0, -0.12]}
+          >
+            <meshStandardMaterial color="#2a1c16" />
+          </RoundedBox>
 
-      {/* CHEEKS */}
-      <mesh position={[-0.34, 2.87, 0.58]}>
-        <sphereGeometry args={[0.11, 18, 18]} />
-        <meshStandardMaterial
-          color="#e9a7a0"
-          transparent
-          opacity={0.16}
-        />
-      </mesh>
+          <RoundedBox
+            position={[0.08, 2.79, 0.69]}
+            args={[0.12, 0.045, 0.035]}
+            radius={0.015}
+            smoothness={3}
+            rotation={[0, 0, 0.12]}
+          >
+            <meshStandardMaterial color="#2a1c16" />
+          </RoundedBox>
 
-      <mesh position={[0.34, 2.87, 0.58]}>
-        <sphereGeometry args={[0.11, 18, 18]} />
-        <meshStandardMaterial
-          color="#e9a7a0"
-          transparent
-          opacity={0.16}
-        />
-      </mesh>
+          {/* Left beard */}
+          <mesh
+            position={[-0.28, 2.66, 0.61]}
+            scale={[0.55, 0.7, 0.3]}
+          >
+            <sphereGeometry args={[0.22, 24, 20]} />
+            <meshStandardMaterial
+              color="#2a1c16"
+              roughness={0.85}
+            />
+          </mesh>
+
+          {/* Right beard */}
+          <mesh
+            position={[0.28, 2.66, 0.61]}
+            scale={[0.55, 0.7, 0.3]}
+          >
+            <sphereGeometry args={[0.22, 24, 20]} />
+            <meshStandardMaterial
+              color="#2a1c16"
+              roughness={0.85}
+            />
+          </mesh>
+
+          {/* Chin beard */}
+          <mesh
+            position={[0, 2.53, 0.62]}
+            scale={[0.7, 0.55, 0.32]}
+          >
+            <sphereGeometry args={[0.23, 24, 20]} />
+            <meshStandardMaterial
+              color="#2a1c16"
+              roughness={0.85}
+            />
+          </mesh>
+        </group>
+      )}
+
+      {/* GIRL soft cheeks */}
+      {!isBoy && (
+        <>
+          <mesh position={[-0.34, 2.87, 0.58]}>
+            <sphereGeometry args={[0.11, 18, 18]} />
+            <meshStandardMaterial
+              color="#e9a7a0"
+              transparent
+              opacity={0.16}
+            />
+          </mesh>
+
+          <mesh position={[0.34, 2.87, 0.58]}>
+            <sphereGeometry args={[0.11, 18, 18]} />
+            <meshStandardMaterial
+              color="#e9a7a0"
+              transparent
+              opacity={0.16}
+            />
+          </mesh>
+        </>
+      )}
     </group>
   );
 }
@@ -286,17 +347,15 @@ function Character({
 
   const h = settings.height;
 
-  /*
-    BODY LAYOUT
-    ფეხიდან ზემოთ ყველაფერი ერთმანეთზეა მიბმული
-  */
-
   const shoeY = 0.05;
 
   const legHeight = 1.28 * h;
-  const legY = shoeY + 0.11 + legHeight / 2;
+
+  const legY =
+    shoeY + 0.11 + legHeight / 2;
 
   const bodyHeight = 1.18 * h;
+
   const bodyY =
     shoeY +
     0.11 +
@@ -319,17 +378,14 @@ function Character({
     neckY + 0.42;
 
   /*
-    Face და Hair ჩვეულებრივ 3.0-ის გარშემო იყო.
-    აქ მთელ group-ს ვწევთ headY-ს შესაბამისად,
-    რათა height შეცვლისას სახე/თმაც სწორ ადგილზე დარჩეს.
+    მთელ პერსონაჟს ვწევთ ოდნავ ზემოთ
+    და კამერას უკან ვწევთ, რომ ფეხებიც ჩანდეს.
   */
-
-  const faceOffsetY = headY - 3.0;
 
   return (
     <group
       ref={group}
-      position={[0, -1.95, 0]}
+      position={[0, -1.72, 0]}
     >
       {/* LEFT SHOE */}
       <RoundedBox
@@ -432,6 +488,43 @@ function Character({
         />
       </RoundedBox>
 
+      {/* SHOULDERS FOR BOY */}
+      {!isGirl && (
+        <>
+          <RoundedBox
+            position={[
+              -0.66,
+              shoulderY,
+              0,
+            ]}
+            args={[0.36, 0.3, 0.68]}
+            radius={0.12}
+            smoothness={5}
+            rotation={[0, 0, -0.1]}
+          >
+            <meshStandardMaterial
+              color={shirt}
+            />
+          </RoundedBox>
+
+          <RoundedBox
+            position={[
+              0.66,
+              shoulderY,
+              0,
+            ]}
+            args={[0.36, 0.3, 0.68]}
+            radius={0.12}
+            smoothness={5}
+            rotation={[0, 0, 0.1]}
+          >
+            <meshStandardMaterial
+              color={shirt}
+            />
+          </RoundedBox>
+        </>
+      )}
+
       {/* LEFT ARM */}
       <RoundedBox
         position={[
@@ -442,7 +535,7 @@ function Character({
         args={[0.3, armHeight, 0.34]}
         radius={0.12}
         smoothness={6}
-        rotation={[0, 0, -0.05]}
+        rotation={[0, 0, -0.04]}
       >
         <meshStandardMaterial
           color={skin}
@@ -460,7 +553,7 @@ function Character({
         args={[0.3, armHeight, 0.34]}
         radius={0.12}
         smoothness={6}
-        rotation={[0, 0, 0.05]}
+        rotation={[0, 0, 0.04]}
       >
         <meshStandardMaterial
           color={skin}
@@ -468,7 +561,7 @@ function Character({
         />
       </RoundedBox>
 
-      {/* LEFT HAND */}
+      {/* HANDS */}
       <mesh
         position={[
           -0.84,
@@ -483,7 +576,6 @@ function Character({
         <meshStandardMaterial color={skin} />
       </mesh>
 
-      {/* RIGHT HAND */}
       <mesh
         position={[
           0.84,
@@ -528,7 +620,13 @@ function Character({
       </mesh>
 
       {/* FACE */}
-      <group position={[0, faceOffsetY, 0]}>
+      <group
+        position={[
+          0,
+          headY - 3.0,
+          0,
+        ]}
+      >
         <Face
           gender={settings.gender}
           skin={skin}
@@ -536,7 +634,13 @@ function Character({
       </group>
 
       {/* HAIR */}
-      <group position={[0, faceOffsetY, 0]}>
+      <group
+        position={[
+          0,
+          headY - 3.0,
+          0,
+        ]}
+      >
         <Hair
           gender={settings.gender}
           color={settings.hairColor}
@@ -581,8 +685,8 @@ export default function AvatarPage() {
           <Canvas
             shadows
             camera={{
-              position: [0, 0.8, 7.8],
-              fov: 40,
+              position: [0, 0.9, 8.7],
+              fov: 42,
             }}
           >
             <ambientLight intensity={1.5} />
@@ -603,8 +707,8 @@ export default function AvatarPage() {
             <Character settings={settings} />
 
             <ContactShadows
-              position={[0, -1.96, 0]}
-              opacity={0.45}
+              position={[0, -1.73, 0]}
+              opacity={0.42}
               scale={6.5}
               blur={2.4}
               far={4}
@@ -612,9 +716,9 @@ export default function AvatarPage() {
 
             <OrbitControls
               enablePan={false}
-              target={[0, 0.55, 0]}
-              minDistance={5}
-              maxDistance={9.5}
+              target={[0, 0.6, 0]}
+              minDistance={5.5}
+              maxDistance={10}
               minPolarAngle={Math.PI / 2.35}
               maxPolarAngle={Math.PI / 1.55}
             />
@@ -691,6 +795,7 @@ export default function AvatarPage() {
 
           {/* HEIGHT */}
           <div className="mt-8">
+
             <div className="mb-3 flex justify-between">
 
               <span className="text-sm font-bold">
@@ -727,15 +832,18 @@ export default function AvatarPage() {
               <span>Short</span>
               <span>Tall</span>
             </div>
+
           </div>
 
-          {/* HAIR COLOR */}
+          {/* HAIR COLORS */}
           <div className="mt-8">
+
             <div className="mb-3 text-sm font-bold">
               Hair Color
             </div>
 
             <div className="grid grid-cols-5 gap-2">
+
               {hairColors.map((color) => (
                 <button
                   key={color}
@@ -757,13 +865,15 @@ export default function AvatarPage() {
                 >
                   {settings.hairColor ===
                     color && (
-                    <span className="text-sm font-black text-white">
+                    <span className="font-black text-white">
                       ✓
                     </span>
                   )}
                 </button>
               ))}
+
             </div>
+
           </div>
         </aside>
       </div>
