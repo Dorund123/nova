@@ -287,7 +287,7 @@ function Character({
   return (
     <group
       ref={group}
-      position={[0, -1.6, 0]}
+      position={[0, -1.9, 0]}
     >
       {/* LEFT SHOE */}
       <RoundedBox
@@ -495,8 +495,8 @@ export default function AvatarPage() {
           <Canvas
             shadows
             camera={{
-              position: [0, 0.2, 7],
-              fov: 35,
+              position: [0, 0.5, 7.3],
+              fov: 36,
             }}
           >
             <ambientLight intensity={1.5} />
@@ -517,7 +517,7 @@ export default function AvatarPage() {
             <Character settings={settings} />
 
             <ContactShadows
-              position={[0, -1.58, 0]}
+              position={[0, -1.88, 0]}
               opacity={0.45}
               scale={6}
               blur={2.4}
@@ -526,7 +526,7 @@ export default function AvatarPage() {
 
             <OrbitControls
               enablePan={false}
-              target={[0, 0.15, 0]}
+              target={[0, 0.55, 0]}
               minDistance={4.5}
               maxDistance={8.5}
               minPolarAngle={Math.PI / 2.4}
@@ -566,9 +566,7 @@ export default function AvatarPage() {
                     : "border-white/10 bg-white/5"
                 }`}
               >
-                <div className="text-4xl">
-                  👨
-                </div>
+                <div className="text-4xl">👨</div>
 
                 <div className="mt-3 font-bold">
                   Boy
@@ -589,9 +587,7 @@ export default function AvatarPage() {
                     : "border-white/10 bg-white/5"
                 }`}
               >
-                <div className="text-4xl">
-                  👩
-                </div>
+                <div className="text-4xl">👩</div>
 
                 <div className="mt-3 font-bold">
                   Girl
