@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  Suspense,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../lib/supabase";
 
@@ -24,14 +29,15 @@ type Message = {
   created_at: string;
 };
 
-export default function MessagesPage() {
+function MessagesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [userId, setUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [friends, setFriends] = useState<Profile[]>([]);
-  const [selectedFriend, setSelectedFriend] = useState<Profile | null>(null);
+  const [selectedFriend, setSelectedFriend] =
+    useState<Profile | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
 
@@ -49,7 +55,7 @@ export default function MessagesPage() {
     if (!userId) return;
 
     loadFriends(userId);
-  }, [userId]);
+  }, [userId, selectedId]);
 
   useEffect(() => {
     if (!userId || !selectedFriend) return;
@@ -77,7 +83,11 @@ export default function MessagesPage() {
           if (!belongsToChat) return;
 
           setMessages((current) => {
-            if (current.some((item) => item.id === message.id)) {
+            if (
+              current.some(
+                (item) => item.id === message.id
+              )
+            ) {
               return current;
             }
 
@@ -106,14 +116,19 @@ export default function MessagesPage() {
 
     setUserId(user.id);
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
-      .select("id, username, display_name, avatar_url")
+      .select(
+        "id, username, display_name, avatar_url"
+      )
       .eq("id", user.id)
       .maybeSingle();
 
-    setProfile(data);
+    if (error) {
+      console.error(error);
+    }
 
+    setProfile(data);
     setLoading(false);
   }
 
@@ -130,18 +145,28 @@ export default function MessagesPage() {
       return;
     }
 
-    const friendIds = ((friendships || []) as Friendship[]).map((friend) =>
-      friend.user_id === currentUserId ? friend.friend_id : friend.user_id
+    const friendIds = (
+      (friendships || []) as Friendship[]
+    ).map((friend) =>
+      friend.user_id === currentUserId
+        ? friend.friend_id
+        : friend.user_id
     );
 
     if (friendIds.length === 0) {
       setFriends([]);
+      setSelectedFriend(null);
       return;
     }
 
-    const { data: profiles, error: profileError } = await supabase
+    const {
+      data: profiles,
+      error: profileError,
+    } = await supabase
       .from("profiles")
-      .select("id, username, display_name, avatar_url")
+      .select(
+        "id, username, display_name, avatar_url"
+      )
       .in("id", friendIds);
 
     if (profileError) {
@@ -149,17 +174,33 @@ export default function MessagesPage() {
       return;
     }
 
-    setFriends(profiles || []);
+    const loadedFriends = profiles || [];
 
-    const requestedFriend = selectedId
-      ? (profiles || []).find((friend) => friend.id === selectedId)
-      : null;
+    setFriends(loadedFriends);
 
-    if (requestedFriend) {
-      setSelectedFriend(requestedFriend);
-    } else if (!selectedFriend && profiles && profiles.length > 0) {
-      setSelectedFriend(profiles[0]);
+    if (selectedId) {
+      const requestedFriend = loadedFriends.find(
+        (friend) => friend.id === selectedId
+      );
+
+      if (requestedFriend) {
+        setSelectedFriend(requestedFriend);
+        return;
+      }
     }
+
+    setSelectedFriend((current) => {
+      if (
+        current &&
+        loadedFriends.some(
+          (friend) => friend.id === current.id
+        )
+      ) {
+        return current;
+      }
+
+      return loadedFriends[0] || null;
+    });
   }
 
   async function loadMessages(
@@ -170,11 +211,15 @@ export default function MessagesPage() {
 
     const { data, error } = await supabase
       .from("messages")
-      .select("id, sender_id, receiver_id, content, created_at")
+      .select(
+        "id, sender_id, receiver_id, content, created_at"
+      )
       .or(
         `and(sender_id.eq.${currentUserId},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${currentUserId})`
       )
-      .order("created_at", { ascending: true });
+      .order("created_at", {
+        ascending: true,
+      });
 
     if (error) {
       console.error(error);
@@ -187,7 +232,12 @@ export default function MessagesPage() {
   }
 
   async function sendMessage() {
-    if (!userId || !selectedFriend || !text.trim() || sending) {
+    if (
+      !userId ||
+      !selectedFriend ||
+      !text.trim() ||
+      sending
+    ) {
       return;
     }
 
@@ -196,11 +246,13 @@ export default function MessagesPage() {
     setSending(true);
     setText("");
 
-    const { error } = await supabase.from("messages").insert({
-      sender_id: userId,
-      receiver_id: selectedFriend.id,
-      content: messageText,
-    });
+    const { error } = await supabase
+      .from("messages")
+      .insert({
+        sender_id: userId,
+        receiver_id: selectedFriend.id,
+        content: messageText,
+      });
 
     if (error) {
       console.error(error);
@@ -211,7 +263,9 @@ export default function MessagesPage() {
   }
 
   const friendCountText = useMemo(() => {
-    return `${friends.length} ${friends.length === 1 ? "friend" : "friends"}`;
+    return `${friends.length} ${
+      friends.length === 1 ? "friend" : "friends"
+    }`;
   }, [friends.length]);
 
   function formatTime(date: string) {
@@ -255,9 +309,7 @@ export default function MessagesPage() {
               Friends
             </button>
 
-            <button
-              className="text-sm font-semibold text-[#5865f2]"
-            >
+            <button className="text-sm font-semibold text-[#5865f2]">
               Messages
             </button>
           </div>
@@ -271,7 +323,9 @@ export default function MessagesPage() {
               />
             ) : (
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#5865f2] font-bold text-white">
-                {profile?.username?.charAt(0).toUpperCase() || "N"}
+                {profile?.username
+                  ?.charAt(0)
+                  .toUpperCase() || "N"}
               </div>
             )}
 
@@ -285,7 +339,10 @@ export default function MessagesPage() {
       <div className="mx-auto flex max-w-7xl gap-6 p-4 md:p-6">
         <aside className="hidden w-80 shrink-0 overflow-hidden rounded-2xl border border-gray-200 bg-white md:block">
           <div className="border-b border-gray-100 p-5">
-            <h1 className="text-xl font-black">Messages</h1>
+            <h1 className="text-xl font-black">
+              Messages
+            </h1>
+
             <p className="mt-1 text-sm text-gray-500">
               {friendCountText}
             </p>
@@ -295,7 +352,11 @@ export default function MessagesPage() {
             {friends.length === 0 ? (
               <div className="rounded-xl bg-gray-50 p-6 text-center">
                 <div className="text-3xl">👥</div>
-                <p className="mt-2 font-bold">No friends yet</p>
+
+                <p className="mt-2 font-bold">
+                  No friends yet
+                </p>
+
                 <button
                   onClick={() => router.push("/friends")}
                   className="mt-4 rounded-lg bg-[#5865f2] px-4 py-2 text-sm font-bold text-white"
@@ -310,7 +371,9 @@ export default function MessagesPage() {
                     key={friend.id}
                     onClick={() => {
                       setSelectedFriend(friend);
-                      router.push(`/messages?user=${friend.id}`);
+                      router.push(
+                        `/messages?user=${friend.id}`
+                      );
                     }}
                     className={`flex w-full items-center gap-3 rounded-xl p-3 text-left transition ${
                       selectedFriend?.id === friend.id
@@ -327,7 +390,9 @@ export default function MessagesPage() {
                         />
                       ) : (
                         <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#5865f2] font-bold text-white">
-                          {friend.username.charAt(0).toUpperCase()}
+                          {friend.username
+                            .charAt(0)
+                            .toUpperCase()}
                         </div>
                       )}
 
@@ -338,6 +403,7 @@ export default function MessagesPage() {
                       <p className="truncate font-bold">
                         {friend.username}
                       </p>
+
                       <p className="truncate text-xs text-gray-500">
                         {friend.display_name}
                       </p>
@@ -353,9 +419,11 @@ export default function MessagesPage() {
           {!selectedFriend ? (
             <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
               <div className="text-6xl">💬</div>
+
               <h2 className="mt-5 text-2xl font-black">
                 Your Messages
               </h2>
+
               <p className="mt-2 max-w-md text-gray-500">
                 Choose a friend and start a conversation.
               </p>
@@ -378,7 +446,9 @@ export default function MessagesPage() {
                   />
                 ) : (
                   <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#5865f2] font-bold text-white">
-                    {selectedFriend.username.charAt(0).toUpperCase()}
+                    {selectedFriend.username
+                      .charAt(0)
+                      .toUpperCase()}
                   </div>
                 )}
 
@@ -401,22 +471,27 @@ export default function MessagesPage() {
                 ) : messages.length === 0 ? (
                   <div className="flex h-full flex-col items-center justify-center text-center">
                     <div className="text-5xl">👋</div>
+
                     <p className="mt-4 font-bold">
                       No messages yet
                     </p>
+
                     <p className="text-sm text-gray-500">
                       Send the first message.
                     </p>
                   </div>
                 ) : (
                   messages.map((message) => {
-                    const mine = message.sender_id === userId;
+                    const mine =
+                      message.sender_id === userId;
 
                     return (
                       <div
                         key={message.id}
                         className={`flex ${
-                          mine ? "justify-end" : "justify-start"
+                          mine
+                            ? "justify-end"
+                            : "justify-start"
                         }`}
                       >
                         <div
@@ -437,7 +512,9 @@ export default function MessagesPage() {
                                 : "text-gray-400"
                             }`}
                           >
-                            {formatTime(message.created_at)}
+                            {formatTime(
+                              message.created_at
+                            )}
                           </p>
                         </div>
                       </div>
@@ -456,7 +533,9 @@ export default function MessagesPage() {
                 <div className="flex gap-2">
                   <input
                     value={text}
-                    onChange={(e) => setText(e.target.value)}
+                    onChange={(e) =>
+                      setText(e.target.value)
+                    }
                     placeholder={`Message ${selectedFriend.username}...`}
                     className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-[#5865f2] focus:bg-white"
                   />
@@ -475,5 +554,21 @@ export default function MessagesPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+function MessagesLoading() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[#f3f3f3] text-gray-500">
+      Loading Messages...
+    </main>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={<MessagesLoading />}>
+      <MessagesContent />
+    </Suspense>
   );
 }
