@@ -50,6 +50,9 @@ export default function ChatPage() {
     loadFriends(userId);
   }, [userId]);
 
+  /*
+   * LOAD MESSAGES + REALTIME
+   */
   useEffect(() => {
     if (!userId || !selectedFriend) {
       setMessages([]);
@@ -57,6 +60,57 @@ export default function ChatPage() {
     }
 
     loadMessages(userId, selectedFriend.id);
+
+    const channel = supabase
+      .channel(
+        `chat-${userId}-${selectedFriend.id}`
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+        },
+        (payload) => {
+          const newMessage =
+            payload.new as Message;
+
+          const belongsToThisChat =
+            (newMessage.sender_id === userId &&
+              newMessage.receiver_id ===
+                selectedFriend.id) ||
+            (newMessage.sender_id ===
+              selectedFriend.id &&
+              newMessage.receiver_id === userId);
+
+          if (!belongsToThisChat) {
+            return;
+          }
+
+          setMessages((current) => {
+            if (
+              current.some(
+                (message) =>
+                  message.id ===
+                  newMessage.id
+              )
+            ) {
+              return current;
+            }
+
+            return [
+              ...current,
+              newMessage,
+            ];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId, selectedFriend]);
 
   async function loadUser() {
@@ -75,7 +129,9 @@ export default function ChatPage() {
     setLoading(false);
   }
 
-  async function loadFriends(currentUserId: string) {
+  async function loadFriends(
+    currentUserId: string
+  ) {
     const {
       data: friendships,
       error,
@@ -87,9 +143,14 @@ export default function ChatPage() {
       );
 
     if (error) {
-      console.error("Friendships error:", error);
+      console.error(
+        "Friendships error:",
+        error
+      );
+
       setFriends([]);
       setSelectedFriend(null);
+
       return;
     }
 
@@ -97,7 +158,10 @@ export default function ChatPage() {
       new Set(
         ((friendships || []) as Friendship[]).map(
           (friendship) => {
-            if (friendship.user_id === currentUserId) {
+            if (
+              friendship.user_id ===
+              currentUserId
+            ) {
               return friendship.friend_id;
             }
 
@@ -110,6 +174,7 @@ export default function ChatPage() {
     if (friendIds.length === 0) {
       setFriends([]);
       setSelectedFriend(null);
+
       return;
     }
 
@@ -131,6 +196,7 @@ export default function ChatPage() {
 
       setFriends([]);
       setSelectedFriend(null);
+
       return;
     }
 
@@ -143,7 +209,8 @@ export default function ChatPage() {
       if (
         current &&
         loadedFriends.some(
-          (friend) => friend.id === current.id
+          (friend) =>
+            friend.id === current.id
         )
       ) {
         return current;
@@ -231,14 +298,36 @@ export default function ChatPage() {
       );
 
       setSending(false);
+
       return;
     }
 
+    /*
+     * Add immediately.
+     * Realtime also listens for INSERT,
+     * so duplicate messages are prevented
+     * by the ID check inside setMessages.
+     */
     if (data) {
-      setMessages((current) => [
-        ...current,
-        data as Message,
-      ]);
+      setMessages((current) => {
+        const newMessage =
+          data as Message;
+
+        if (
+          current.some(
+            (message) =>
+              message.id ===
+              newMessage.id
+          )
+        ) {
+          return current;
+        }
+
+        return [
+          ...current,
+          newMessage,
+        ];
+      });
     }
 
     setSending(false);
@@ -265,10 +354,13 @@ export default function ChatPage() {
   }
 
   function formatTime(date: string) {
-    return new Date(date).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return new Date(date).toLocaleTimeString(
+      [],
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+      }
+    );
   }
 
   if (loading) {
@@ -290,12 +382,16 @@ export default function ChatPage() {
   return (
     <main className="min-h-screen bg-[#f3f3f3] p-4 md:p-6">
       <div className="mx-auto flex max-w-7xl gap-6">
+
         {/* FRIENDS */}
 
         <aside className="w-full max-w-sm overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
           <div className="border-b border-gray-100 p-5">
+
             <button
-              onClick={() => router.push("/")}
+              onClick={() =>
+                router.push("/")
+              }
               className="mb-4 text-sm font-bold text-[#5865f2]"
             >
               ← Back to Nova
@@ -308,11 +404,15 @@ export default function ChatPage() {
             <p className="mt-1 text-sm text-gray-500">
               Chat with your friends
             </p>
+
           </div>
 
           <div className="p-3">
+
             {friends.length === 0 ? (
+
               <div className="rounded-xl bg-gray-50 p-6 text-center">
+
                 <div className="text-4xl">
                   👥
                 </div>
@@ -328,20 +428,29 @@ export default function ChatPage() {
 
                 <button
                   onClick={() =>
-                    router.push("/friends")
+                    router.push(
+                      "/friends"
+                    )
                   }
                   className="mt-4 rounded-xl bg-[#5865f2] px-5 py-3 font-bold text-white transition hover:opacity-90"
                 >
                   Find Friends
                 </button>
+
               </div>
+
             ) : (
+
               <div className="space-y-2">
+
                 {friends.map((friend) => (
+
                   <button
                     key={friend.id}
                     onClick={() =>
-                      setSelectedFriend(friend)
+                      setSelectedFriend(
+                        friend
+                      )
                     }
                     className={`flex w-full items-center gap-3 rounded-xl p-3 text-left transition ${
                       selectedFriend?.id ===
@@ -350,13 +459,17 @@ export default function ChatPage() {
                         : "hover:bg-gray-50"
                     }`}
                   >
+
                     <div className="relative">
+
                       {avatar(friend)}
 
                       <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-green-500" />
+
                     </div>
 
                     <div className="min-w-0">
+
                       <p className="truncate font-black">
                         {friend.username}
                       </p>
@@ -364,19 +477,28 @@ export default function ChatPage() {
                       <p className="truncate text-xs text-gray-500">
                         {friend.display_name}
                       </p>
+
                     </div>
+
                   </button>
+
                 ))}
+
               </div>
+
             )}
+
           </div>
         </aside>
 
         {/* CHAT */}
 
         <section className="hidden min-h-[calc(100vh-3rem)] flex-1 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm md:flex">
+
           {!selectedFriend ? (
+
             <div className="flex flex-1 flex-col items-center justify-center">
+
               <div className="text-6xl">
                 💬
               </div>
@@ -388,15 +510,23 @@ export default function ChatPage() {
               <p className="mt-2 text-gray-500">
                 Select a friend to start chatting.
               </p>
+
             </div>
+
           ) : (
+
             <>
+
               {/* CHAT HEADER */}
 
               <div className="flex items-center gap-3 border-b border-gray-100 p-5">
-                {avatar(selectedFriend)}
+
+                {avatar(
+                  selectedFriend
+                )}
 
                 <div>
+
                   <h2 className="font-black">
                     {selectedFriend.username}
                   </h2>
@@ -404,18 +534,25 @@ export default function ChatPage() {
                   <p className="text-xs text-green-600">
                     ● Friend
                   </p>
+
                 </div>
+
               </div>
 
               {/* MESSAGES */}
 
               <div className="flex-1 space-y-3 overflow-y-auto bg-[#fafafa] p-6">
+
                 {messagesLoading ? (
+
                   <div className="flex h-full items-center justify-center text-gray-500">
                     Loading messages...
                   </div>
+
                 ) : messages.length === 0 ? (
+
                   <div className="flex h-full flex-col items-center justify-center text-center">
+
                     <div className="text-5xl">
                       👋
                     </div>
@@ -427,49 +564,65 @@ export default function ChatPage() {
                     <p className="text-sm text-gray-500">
                       Send the first message.
                     </p>
-                  </div>
-                ) : (
-                  messages.map((message) => {
-                    const mine =
-                      message.sender_id ===
-                      userId;
 
-                    return (
-                      <div
-                        key={message.id}
-                        className={`flex ${
-                          mine
-                            ? "justify-end"
-                            : "justify-start"
-                        }`}
-                      >
+                  </div>
+
+                ) : (
+
+                  messages.map(
+                    (message) => {
+
+                      const mine =
+                        message.sender_id ===
+                        userId;
+
+                      return (
                         <div
-                          className={`max-w-[75%] rounded-2xl px-4 py-3 ${
+                          key={
+                            message.id
+                          }
+                          className={`flex ${
                             mine
-                              ? "rounded-br-md bg-[#5865f2] text-white"
-                              : "rounded-bl-md bg-white text-gray-900 shadow-sm"
+                              ? "justify-end"
+                              : "justify-start"
                           }`}
                         >
-                          <p className="break-words text-sm">
-                            {message.content}
-                          </p>
 
-                          <p
-                            className={`mt-1 text-[10px] ${
+                          <div
+                            className={`max-w-[75%] rounded-2xl px-4 py-3 ${
                               mine
-                                ? "text-white/70"
-                                : "text-gray-400"
+                                ? "rounded-br-md bg-[#5865f2] text-white"
+                                : "rounded-bl-md bg-white text-gray-900 shadow-sm"
                             }`}
                           >
-                            {formatTime(
-                              message.created_at
-                            )}
-                          </p>
+
+                            <p className="break-words text-sm">
+                              {
+                                message.content
+                              }
+                            </p>
+
+                            <p
+                              className={`mt-1 text-[10px] ${
+                                mine
+                                  ? "text-white/70"
+                                  : "text-gray-400"
+                              }`}
+                            >
+                              {formatTime(
+                                message.created_at
+                              )}
+                            </p>
+
+                          </div>
+
                         </div>
-                      </div>
-                    );
-                  })
+                      );
+                    }
+                  )
+
                 )}
+
               </div>
 
               {/* MESSAGE INPUT */}
@@ -481,7 +634,9 @@ export default function ChatPage() {
                 }}
                 className="border-t border-gray-100 p-4"
               >
+
                 <div className="flex gap-2">
+
                   <input
                     value={text}
                     onChange={(event) =>
@@ -506,11 +661,17 @@ export default function ChatPage() {
                       ? "..."
                       : "Send"}
                   </button>
+
                 </div>
+
               </form>
+
             </>
+
           )}
+
         </section>
+
       </div>
     </main>
   );
