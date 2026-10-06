@@ -68,14 +68,14 @@ export default function CreatePage() {
     }
   }
 
-  function openStudio(id: string) {
+  function openStudio(worldId: string) {
     setMenuId(null);
-    router.push(`/create/studio?world=${id}`);
+    router.push(`/create/studio?world=${worldId}`);
   }
 
-  function playWorld(id: string) {
+  function playWorld(worldId: string) {
     setMenuId(null);
-    router.push(`/play?world=${id}`);
+    router.push(`/play?world=${worldId}`);
   }
 
   async function deleteWorld(id: string) {
@@ -216,7 +216,9 @@ export default function CreatePage() {
 
               <input
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) =>
+                  setSearch(e.target.value)
+                }
                 placeholder="Search Experiences"
                 className="h-10 w-full rounded-lg border border-[#303238] bg-[#1a1b1f] pl-11 pr-4 text-sm outline-none placeholder:text-slate-600 focus:border-cyan-400"
               />
@@ -299,9 +301,7 @@ export default function CreatePage() {
 
           {activeTab === "shared" && (
             <div className="mt-8 rounded-xl border border-dashed border-[#303238] bg-[#18191c] p-16 text-center">
-              <div className="text-6xl">
-                🔗
-              </div>
+              <div className="text-6xl">🔗</div>
 
               <h2 className="mt-5 text-xl font-black">
                 Shared With Me
@@ -339,9 +339,7 @@ export default function CreatePage() {
               {!loading &&
                 filteredWorlds.length === 0 && (
                   <div className="rounded-xl border border-dashed border-[#303238] bg-[#18191c] p-16 text-center">
-                    <div className="text-6xl">
-                      🎮
-                    </div>
+                    <div className="text-6xl">🎮</div>
 
                     <h3 className="mt-5 text-xl font-black">
                       No Experiences Yet
@@ -371,7 +369,7 @@ export default function CreatePage() {
                         key={world.id}
                         className="overflow-visible rounded-xl border border-[#292b30] bg-[#18191c] transition hover:border-[#4a4d55]"
                       >
-                        <div className="relative flex h-[190px] items-center justify-center rounded-t-xl bg-gradient-to-br from-[#123049] via-[#1b2532] to-[#2b1b40]">
+                        <div className="relative flex h-[190px] items-center justify-center overflow-visible rounded-t-xl bg-gradient-to-br from-[#123049] via-[#1b2532] to-[#2b1b40]">
                           <div className="text-7xl transition duration-300 hover:scale-110">
                             🎮
                           </div>
