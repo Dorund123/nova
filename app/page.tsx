@@ -17,12 +17,19 @@ export default function HomePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [search, setSearch] = useState("");
 
-  const [showUsernameEditor, setShowUsernameEditor] = useState(false);
-  const [newUsername, setNewUsername] = useState("");
-  const [changingUsername, setChangingUsername] = useState(false);
-  const [usernameMessage, setUsernameMessage] = useState("");
+  const [showUsernameEditor, setShowUsernameEditor] =
+    useState(false);
+  const [showNovuxShop, setShowNovuxShop] =
+    useState(false);
 
-  const [registeredCount, setRegisteredCount] = useState(0);
+  const [newUsername, setNewUsername] = useState("");
+  const [changingUsername, setChangingUsername] =
+    useState(false);
+  const [usernameMessage, setUsernameMessage] =
+    useState("");
+
+  const [registeredCount, setRegisteredCount] =
+    useState(0);
   const [visitedCount, setVisitedCount] = useState(0);
   const [onlineCount, setOnlineCount] = useState(0);
 
@@ -52,7 +59,9 @@ export default function HomePage() {
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("username, display_name, avatar_url, novux_balance")
+      .select(
+        "username, display_name, avatar_url, novux_balance"
+      )
       .eq("id", user.id)
       .maybeSingle();
 
@@ -65,7 +74,8 @@ export default function HomePage() {
   }
 
   async function loadStats() {
-    const { data, error } = await supabase.rpc("get_nova_stats");
+    const { data, error } =
+      await supabase.rpc("get_nova_stats");
 
     if (error) {
       console.error("Stats error:", error);
@@ -108,9 +118,8 @@ export default function HomePage() {
       return;
     }
 
-    const { data, error } = await supabase.rpc(
-      "add_site_view"
-    );
+    const { data, error } =
+      await supabase.rpc("add_site_view");
 
     if (error) {
       console.error("Visit error:", error);
@@ -134,9 +143,8 @@ export default function HomePage() {
       return;
     }
 
-    const { error } = await supabase.rpc(
-      "update_online_status"
-    );
+    const { error } =
+      await supabase.rpc("update_online_status");
 
     if (error) {
       console.error(
@@ -194,12 +202,10 @@ export default function HomePage() {
     setChangingUsername(true);
     setUsernameMessage("");
 
-    const { data, error } = await supabase.rpc(
-      "change_username",
-      {
+    const { data, error } =
+      await supabase.rpc("change_username", {
         new_username: username,
-      }
-    );
+      });
 
     if (error) {
       setChangingUsername(false);
@@ -277,13 +283,17 @@ export default function HomePage() {
           {/* RIGHT */}
           <div className="ml-auto flex items-center gap-2">
 
+            {/* NOVUX BUTTON */}
             {profile && (
               <button
-                onClick={() => router.push("/novux")}
+                onClick={() =>
+                  setShowNovuxShop(true)
+                }
                 className="hidden rounded-xl bg-blue-50 px-4 py-2 text-sm font-black text-blue-600 transition hover:bg-blue-100 md:block"
               >
                 💎{" "}
-                {profile.novux_balance.toLocaleString()}
+                {profile.novux_balance.toLocaleString()}{" "}
+                Novux
               </button>
             )}
 
@@ -609,14 +619,12 @@ export default function HomePage() {
 
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-950 via-gray-900 to-blue-950 p-6 text-white shadow-2xl sm:p-8">
 
-              {/* Background Glow */}
               <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-blue-600/20 blur-3xl" />
 
               <div className="pointer-events-none absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-purple-600/20 blur-3xl" />
 
               <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
 
-                {/* LEFT */}
                 <div className="max-w-2xl">
 
                   <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1.5 text-xs font-black text-blue-300">
@@ -636,7 +644,6 @@ export default function HomePage() {
                     risk means a bigger multiplier.
                   </p>
 
-                  {/* FEATURES */}
                   <div className="mt-6 flex flex-wrap gap-2">
 
                     <span className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-gray-200">
@@ -653,7 +660,6 @@ export default function HomePage() {
 
                   </div>
 
-                  {/* BALANCE */}
                   {profile && (
                     <div className="mt-6 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
 
@@ -679,7 +685,6 @@ export default function HomePage() {
 
                 </div>
 
-                {/* RIGHT */}
                 <div className="relative shrink-0">
 
                   <button
@@ -713,7 +718,6 @@ export default function HomePage() {
 
               </div>
 
-              {/* EXAMPLE */}
               <div className="relative mt-8 grid gap-3 sm:grid-cols-3">
 
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -941,6 +945,159 @@ export default function HomePage() {
         </main>
 
       </div>
+
+      {/* NOVUX SHOP MODAL */}
+      {showNovuxShop && (
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          onClick={() => setShowNovuxShop(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl"
+          >
+
+            {/* SHOP HEADER */}
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
+
+              <div className="flex items-start justify-between">
+
+                <div>
+
+                  <div className="mb-2 inline-flex rounded-xl bg-white/15 px-3 py-1.5 text-xs font-black">
+                    💎 NOVA STORE
+                  </div>
+
+                  <h2 className="text-3xl font-black">
+                    Buy Novux
+                  </h2>
+
+                  <p className="mt-1 text-sm text-blue-100">
+                    Choose a Novux package and add more balance.
+                  </p>
+
+                </div>
+
+                <button
+                  onClick={() =>
+                    setShowNovuxShop(false)
+                  }
+                  className="rounded-xl px-3 py-2 text-xl text-white/70 transition hover:bg-white/10 hover:text-white"
+                >
+                  ✕
+                </button>
+
+              </div>
+
+              {/* CURRENT BALANCE */}
+              <div className="mt-5 flex items-center gap-3 rounded-2xl bg-black/20 p-4">
+
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 text-xl">
+                  💎
+                </div>
+
+                <div>
+
+                  <p className="text-xs font-semibold text-blue-100">
+                    Your Current Balance
+                  </p>
+
+                  <p className="text-xl font-black">
+                    {profile?.novux_balance.toLocaleString()} Novux
+                  </p>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* PACKAGES */}
+            <div className="p-6">
+
+              <div className="grid gap-4 sm:grid-cols-2">
+
+                <NovuxPackage
+                  amount="300"
+                  price="$3"
+                  icon="💎"
+                  onBuy={() => {
+                    alert("300 Novux — $3");
+                  }}
+                />
+
+                <NovuxPackage
+                  amount="1,000"
+                  price="$7"
+                  icon="💎"
+                  popular
+                  onBuy={() => {
+                    alert("1,000 Novux — $7");
+                  }}
+                />
+
+                <NovuxPackage
+                  amount="2,500"
+                  price="$15"
+                  icon="💎"
+                  onBuy={() => {
+                    alert("2,500 Novux — $15");
+                  }}
+                />
+
+                <NovuxPackage
+                  amount="5,000"
+                  price="$25"
+                  icon="💎"
+                  onBuy={() => {
+                    alert("5,000 Novux — $25");
+                  }}
+                />
+
+                <NovuxPackage
+                  amount="10,000"
+                  price="$45"
+                  icon="💎"
+                  onBuy={() => {
+                    alert("10,000 Novux — $45");
+                  }}
+                />
+
+                <div className="flex items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-5 text-center">
+
+                  <div>
+
+                    <div className="text-3xl">
+                      🚀
+                    </div>
+
+                    <p className="mt-2 font-black text-gray-800">
+                      More packages coming
+                    </p>
+
+                    <p className="mt-1 text-xs text-gray-400">
+                      Bigger Novux bundles will be added soon.
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              <div className="mt-5 rounded-2xl bg-gray-50 p-4 text-center">
+
+                <p className="text-xs font-semibold text-gray-400">
+                  Secure payments • Novux will be added to your balance after purchase.
+                </p>
+
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* CHANGE USERNAME MODAL */}
       {showUsernameEditor && (
@@ -1258,6 +1415,83 @@ function GameCard({
       </div>
 
     </button>
+  );
+}
+
+/* NOVUX PACKAGE */
+
+function NovuxPackage({
+  amount,
+  price,
+  icon,
+  popular,
+  onBuy,
+}: {
+  amount: string;
+  price: string;
+  icon: string;
+  popular?: boolean;
+  onBuy: () => void;
+}) {
+  return (
+    <div
+      className={`relative rounded-2xl border p-5 transition hover:-translate-y-1 hover:shadow-lg ${
+        popular
+          ? "border-blue-300 bg-blue-50/50"
+          : "border-gray-200 bg-white"
+      }`}
+    >
+
+      {popular && (
+        <div className="absolute -top-3 left-4 rounded-full bg-blue-600 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white">
+          Most Popular
+        </div>
+      )}
+
+      <div className="flex items-center gap-4">
+
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-3xl">
+          {icon}
+        </div>
+
+        <div>
+
+          <p className="text-2xl font-black text-gray-900">
+            {amount}
+          </p>
+
+          <p className="text-sm font-semibold text-gray-400">
+            Novux
+          </p>
+
+        </div>
+
+      </div>
+
+      <div className="mt-5 flex items-center justify-between">
+
+        <div>
+
+          <p className="text-xs font-bold uppercase tracking-wider text-gray-400">
+            Price
+          </p>
+
+          <p className="mt-1 text-2xl font-black text-gray-900">
+            {price}
+          </p>
+
+        </div>
+
+        <button
+          onClick={onBuy}
+          className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-black text-white transition hover:bg-blue-700"
+        >
+          Buy
+        </button>
+
+      </div>
+
+    </div>
   );
 }
 
