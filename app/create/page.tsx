@@ -21,6 +21,9 @@ export default function CreatePage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [menuId, setMenuId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<
+    "mine" | "shared"
+  >("mine");
 
   useEffect(() => {
     loadExperiences();
@@ -35,7 +38,9 @@ export default function CreatePage() {
         error: authError,
       } = await supabase.auth.getUser();
 
-      if (authError) throw authError;
+      if (authError) {
+        throw authError;
+      }
 
       if (!user) {
         router.push("/login");
@@ -52,24 +57,40 @@ export default function CreatePage() {
           ascending: false,
         });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       setWorlds((data || []) as World[]);
     } catch (error) {
-      console.error("LOAD EXPERIENCES:", error);
+      console.error("LOAD EXPERIENCES ERROR:", error);
       setWorlds([]);
     } finally {
       setLoading(false);
     }
   }
 
+  function openStudio(id: string) {
+    setMenuId(null);
+
+    router.push(`/create/studio?world=${id}`);
+  }
+
+  function playWorld(id: string) {
+    setMenuId(null);
+
+    router.push(`/play?world=${id}`);
+  }
+
   async function deleteWorld(id: string) {
-    const world = worlds.find((item) => item.id === id);
+    const world = worlds.find(
+      (item) => item.id === id
+    );
 
     if (!world) return;
 
     const confirmed = window.confirm(
-      `Delete "${world.name}"?`
+      `Are you sure you want to delete "${world.name}"?`
     );
 
     if (!confirmed) return;
@@ -98,9 +119,7 @@ export default function CreatePage() {
 
     return (
       world.name.toLowerCase().includes(query) ||
-      world.description
-        .toLowerCase()
-        .includes(query)
+      world.description.toLowerCase().includes(query)
     );
   });
 
@@ -109,7 +128,9 @@ export default function CreatePage() {
       className="min-h-screen bg-[#111214] text-white"
       onClick={() => setMenuId(null)}
     >
-      {/* SIDEBAR */}
+      {/* =====================================================
+          SIDEBAR
+      ====================================================== */}
 
       <aside className="fixed inset-y-0 left-0 hidden w-[250px] border-r border-[#2a2c31] bg-[#18191c] lg:block">
         <div className="flex h-[72px] items-center border-b border-[#2a2c31] px-6">
@@ -138,22 +159,55 @@ export default function CreatePage() {
             Creations
           </div>
 
-          <div className="flex items-center gap-3 rounded-lg bg-[#2b2d32] px-3 py-3 text-sm font-black">
-            <span>🎮</span>
-            <span>Experiences</span>
-          </div>
+          {/* EXPERIENCES */}
 
-          <button className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-bold text-slate-500 hover:bg-white/5 hover:text-white">
+          <button
+            onClick={() => {
+              setActiveTab("mine");
+              router.push("/create");
+            }}
+            className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-black transition ${
+              activeTab === "mine"
+                ? "bg-[#2b2d32] text-white"
+                : "text-slate-400 hover:bg-white/5 hover:text-white"
+            }`}
+          >
+            🎮
+            <span>Experiences</span>
+          </button>
+
+          {/* SHARE LINKS */}
+
+          <button
+            onClick={() =>
+              router.push("/create/share-links")
+            }
+            className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-bold text-slate-400 transition hover:bg-white/5 hover:text-white"
+          >
             🔗
             <span>Share Links</span>
           </button>
 
-          <button className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-bold text-slate-500 hover:bg-white/5 hover:text-white">
+          {/* AVATAR ITEMS */}
+
+          <button
+            onClick={() =>
+              router.push("/create/avatar-items")
+            }
+            className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-bold text-slate-400 transition hover:bg-white/5 hover:text-white"
+          >
             👕
             <span>Avatar Items</span>
           </button>
 
-          <button className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-bold text-slate-500 hover:bg-white/5 hover:text-white">
+          {/* DEVELOPMENT ITEMS */}
+
+          <button
+            onClick={() =>
+              router.push("/create/development-items")
+            }
+            className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-bold text-slate-400 transition hover:bg-white/5 hover:text-white"
+          >
             🧩
             <span>Development Items</span>
           </button>
@@ -162,7 +216,7 @@ export default function CreatePage() {
 
           <button
             onClick={() => router.push("/")}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-bold text-slate-500 hover:bg-white/5 hover:text-white"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-bold text-slate-500 transition hover:bg-white/5 hover:text-white"
           >
             ←
             <span>Back to Nova</span>
@@ -170,11 +224,11 @@ export default function CreatePage() {
         </div>
       </aside>
 
-      {/* MAIN */}
+      {/* =====================================================
+          MAIN
+      ====================================================== */}
 
       <div className="lg:ml-[250px]">
-        {/* HEADER */}
-
         <header className="sticky top-0 z-40 h-[72px] border-b border-[#2a2c31] bg-[#111214]/95 backdrop-blur">
           <div className="flex h-full items-center px-5 sm:px-8">
             <div className="relative w-full max-w-[430px]">
@@ -204,11 +258,7 @@ export default function CreatePage() {
           </div>
         </header>
 
-        {/* CONTENT */}
-
         <section className="mx-auto max-w-[1250px] px-5 py-9 sm:px-8">
-          {/* BREADCRUMB */}
-
           <div className="text-sm font-bold text-slate-600">
             Creations
             <span className="mx-2">/</span>
@@ -216,8 +266,6 @@ export default function CreatePage() {
               Experiences
             </span>
           </div>
-
-          {/* TITLE */}
 
           <div className="mt-5 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -247,214 +295,230 @@ export default function CreatePage() {
           {/* TABS */}
 
           <div className="mt-8 border-b border-[#292b30]">
-            <button className="border-b-2 border-cyan-400 pb-4 text-sm font-black text-white">
+            <button
+              onClick={() => setActiveTab("mine")}
+              className={`mr-7 pb-4 text-sm font-black ${
+                activeTab === "mine"
+                  ? "border-b-2 border-cyan-400 text-white"
+                  : "text-slate-500"
+              }`}
+            >
               My Experiences
             </button>
 
-            <button className="ml-7 pb-4 text-sm font-bold text-slate-500">
+            <button
+              onClick={() => setActiveTab("shared")}
+              className={`pb-4 text-sm font-black ${
+                activeTab === "shared"
+                  ? "border-b-2 border-cyan-400 text-white"
+                  : "text-slate-500"
+              }`}
+            >
               Shared With Me
             </button>
           </div>
 
-          {/* EXPERIENCE LIST */}
+          {/* SHARED WITH ME */}
 
-          <div className="mt-8">
-            <div className="mb-5">
-              <h2 className="text-2xl font-black">
-                My Experiences
+          {activeTab === "shared" && (
+            <div className="mt-8 rounded-xl border border-dashed border-[#303238] bg-[#18191c] p-16 text-center">
+              <div className="text-6xl">
+                🔗
+              </div>
+
+              <h2 className="mt-5 text-xl font-black">
+                Shared With Me
               </h2>
 
-              <p className="mt-1 text-xs text-slate-600">
-                {worlds.length} created
+              <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
+                Experiences that other creators share
+                with you will appear here.
               </p>
             </div>
+          )}
 
-            {/* LOADING */}
+          {/* MY EXPERIENCES */}
 
-            {loading && (
-              <div className="rounded-xl border border-[#292b30] bg-[#18191c] p-16 text-center">
-                <div className="mx-auto h-9 w-9 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-400" />
+          {activeTab === "mine" && (
+            <div className="mt-8">
+              <div className="mb-5">
+                <h2 className="text-2xl font-black">
+                  My Experiences
+                </h2>
 
-                <p className="mt-4 text-sm font-bold text-slate-500">
-                  Loading experiences...
+                <p className="mt-1 text-xs text-slate-600">
+                  {worlds.length} created
                 </p>
               </div>
-            )}
 
-            {/* EMPTY */}
+              {loading && (
+                <div className="rounded-xl border border-[#292b30] bg-[#18191c] p-16 text-center">
+                  <div className="mx-auto h-9 w-9 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-400" />
 
-            {!loading &&
-              filteredWorlds.length === 0 && (
-                <div className="rounded-xl border border-dashed border-[#303238] bg-[#18191c] p-16 text-center">
-                  <div className="text-6xl">
-                    🎮
-                  </div>
-
-                  <h3 className="mt-5 text-xl font-black">
-                    No Experiences Yet
-                  </h3>
-
-                  <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-                    Create your first game and it will
-                    appear here automatically.
+                  <p className="mt-4 text-sm font-bold text-slate-500">
+                    Loading experiences...
                   </p>
-
-                  <button
-                    onClick={() =>
-                      router.push("/create/new")
-                    }
-                    className="mt-6 rounded-lg bg-cyan-400 px-6 py-3 text-sm font-black text-black hover:bg-cyan-300"
-                  >
-                    Create Experience
-                  </button>
                 </div>
               )}
 
-            {/* CARDS */}
-
-            {!loading &&
-              filteredWorlds.length > 0 && (
-                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                  {filteredWorlds.map((world) => (
-                    <div
-                      key={world.id}
-                      className="overflow-visible rounded-xl border border-[#292b30] bg-[#18191c] transition hover:border-[#4a4d55]"
-                    >
-                      {/* THUMBNAIL */}
-
-                      <div className="relative flex h-[190px] items-center justify-center overflow-visible rounded-t-xl bg-gradient-to-br from-[#123049] via-[#1b2532] to-[#2b1b40]">
-                        <div className="text-7xl transition duration-300 hover:scale-110">
-                          🎮
-                        </div>
-
-                        <span
-                          className={`absolute left-3 top-3 rounded-md px-2.5 py-1 text-[10px] font-black uppercase ${
-                            world.published
-                              ? "bg-emerald-500/20 text-emerald-300"
-                              : "bg-black/50 text-slate-300"
-                          }`}
-                        >
-                          {world.published
-                            ? "Public"
-                            : "Private"}
-                        </span>
-
-                        {/* THREE DOT */}
-
-                        <div className="absolute right-3 top-3">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-
-                              setMenuId(
-                                menuId === world.id
-                                  ? null
-                                  : world.id
-                              );
-                            }}
-                            className="flex h-9 w-9 items-center justify-center rounded-lg bg-black/50 text-xl font-black hover:bg-black/70"
-                          >
-                            ⋮
-                          </button>
-
-                          {menuId === world.id && (
-                            <div
-                              onClick={(e) =>
-                                e.stopPropagation()
-                              }
-                              className="absolute right-0 top-11 z-50 w-48 rounded-xl border border-[#3a3c43] bg-[#202126] p-1.5 shadow-2xl"
-                            >
-                              <button
-                                onClick={() =>
-                                  router.push(
-                                    `/create?world=${world.id}`
-                                  )
-                                }
-                                className="w-full rounded-lg px-3 py-3 text-left text-sm font-bold hover:bg-white/10"
-                              >
-                                ✏️ Edit
-                              </button>
-
-                              <button
-                                onClick={() =>
-                                  alert(
-                                    `"${world.name}" Play`
-                                  )
-                                }
-                                className="w-full rounded-lg px-3 py-3 text-left text-sm font-bold hover:bg-white/10"
-                              >
-                                ▶️ Play
-                              </button>
-
-                              <button
-                                onClick={() => {
-                                  setMenuId(null);
-
-                                  alert(
-                                    `Players: ${world.max_players}`
-                                  );
-                                }}
-                                className="w-full rounded-lg px-3 py-3 text-left text-sm font-bold hover:bg-white/10"
-                              >
-                                ⚙️ Settings
-                              </button>
-
-                              <div className="my-1 border-t border-[#3a3c43]" />
-
-                              <button
-                                onClick={() =>
-                                  deleteWorld(
-                                    world.id
-                                  )
-                                }
-                                className="w-full rounded-lg px-3 py-3 text-left text-sm font-bold text-red-300 hover:bg-red-500/10"
-                              >
-                                🗑️ Delete
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* INFO */}
-
-                      <div className="p-4">
-                        <h3 className="truncate text-lg font-black">
-                          {world.name}
-                        </h3>
-
-                        <p className="mt-2 min-h-[40px] text-sm text-slate-600">
-                          {world.description ||
-                            "No description"}
-                        </p>
-
-                        <div className="mt-4 flex gap-2">
-                          <span className="rounded-md bg-[#22242a] px-2.5 py-1.5 text-[10px] font-bold text-slate-500">
-                            👥 {world.max_players}
-                            {" "}Players
-                          </span>
-
-                          <span className="rounded-md bg-[#22242a] px-2.5 py-1.5 text-[10px] font-bold text-slate-500">
-                            🎮 Experience
-                          </span>
-                        </div>
-
-                        <button
-                          onClick={() =>
-                            router.push(
-                              `/create?world=${world.id}`
-                            )
-                          }
-                          className="mt-4 w-full rounded-lg border border-[#303238] bg-[#212329] py-3 text-xs font-black hover:border-cyan-400 hover:bg-cyan-400 hover:text-black"
-                        >
-                          Open in Studio
-                        </button>
-                      </div>
+              {!loading &&
+                filteredWorlds.length === 0 && (
+                  <div className="rounded-xl border border-dashed border-[#303238] bg-[#18191c] p-16 text-center">
+                    <div className="text-6xl">
+                      🎮
                     </div>
-                  ))}
-                </div>
-              )}
-          </div>
+
+                    <h3 className="mt-5 text-xl font-black">
+                      No Experiences Yet
+                    </h3>
+
+                    <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
+                      Create your first game and it
+                      will appear here automatically.
+                    </p>
+
+                    <button
+                      onClick={() =>
+                        router.push("/create/new")
+                      }
+                      className="mt-6 rounded-lg bg-cyan-400 px-6 py-3 text-sm font-black text-black hover:bg-cyan-300"
+                    >
+                      Create Experience
+                    </button>
+                  </div>
+                )}
+
+              {!loading &&
+                filteredWorlds.length > 0 && (
+                  <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                    {filteredWorlds.map((world) => (
+                      <div
+                        key={world.id}
+                        className="overflow-visible rounded-xl border border-[#292b30] bg-[#18191c] transition hover:border-[#4a4d55]"
+                      >
+                        <div className="relative flex h-[190px] items-center justify-center rounded-t-xl bg-gradient-to-br from-[#123049] via-[#1b2532] to-[#2b1b40]">
+                          <div className="text-7xl">
+                            🎮
+                          </div>
+
+                          <span className="absolute left-3 top-3 rounded-md bg-black/50 px-2.5 py-1 text-[10px] font-black uppercase text-slate-300">
+                            {world.published
+                              ? "Public"
+                              : "Private"}
+                          </span>
+
+                          <div className="absolute right-3 top-3">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+
+                                setMenuId(
+                                  menuId === world.id
+                                    ? null
+                                    : world.id
+                                );
+                              }}
+                              className="flex h-9 w-9 items-center justify-center rounded-lg bg-black/50 text-xl font-black hover:bg-black/70"
+                            >
+                              ⋮
+                            </button>
+
+                            {menuId === world.id && (
+                              <div
+                                onClick={(e) =>
+                                  e.stopPropagation()
+                                }
+                                className="absolute right-0 top-11 z-50 w-48 rounded-xl border border-[#3a3c43] bg-[#202126] p-1.5 shadow-2xl"
+                              >
+                                <button
+                                  onClick={() =>
+                                    openStudio(
+                                      world.id
+                                    )
+                                  }
+                                  className="w-full rounded-lg px-3 py-3 text-left text-sm font-bold hover:bg-white/10"
+                                >
+                                  ✏️ Edit
+                                </button>
+
+                                <button
+                                  onClick={() =>
+                                    playWorld(
+                                      world.id
+                                    )
+                                  }
+                                  className="w-full rounded-lg px-3 py-3 text-left text-sm font-bold hover:bg-white/10"
+                                >
+                                  ▶️ Play
+                                </button>
+
+                                <button
+                                  onClick={() => {
+                                    setMenuId(null);
+
+                                    alert(
+                                      `Players: ${world.max_players}`
+                                    );
+                                  }}
+                                  className="w-full rounded-lg px-3 py-3 text-left text-sm font-bold hover:bg-white/10"
+                                >
+                                  ⚙️ Settings
+                                </button>
+
+                                <div className="my-1 border-t border-[#3a3c43]" />
+
+                                <button
+                                  onClick={() =>
+                                    deleteWorld(
+                                      world.id
+                                    )
+                                  }
+                                  className="w-full rounded-lg px-3 py-3 text-left text-sm font-bold text-red-300 hover:bg-red-500/10"
+                                >
+                                  🗑️ Delete
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="p-4">
+                          <h3 className="truncate text-lg font-black">
+                            {world.name}
+                          </h3>
+
+                          <p className="mt-2 min-h-[40px] text-sm text-slate-600">
+                            {world.description ||
+                              "No description"}
+                          </p>
+
+                          <div className="mt-4 flex gap-2">
+                            <span className="rounded-md bg-[#22242a] px-2.5 py-1.5 text-[10px] font-bold text-slate-500">
+                              👥 {world.max_players} Players
+                            </span>
+
+                            <span className="rounded-md bg-[#22242a] px-2.5 py-1.5 text-[10px] font-bold text-slate-500">
+                              🎮 Experience
+                            </span>
+                          </div>
+
+                          {/* FIXED OPEN STUDIO */}
+
+                          <button
+                            onClick={() =>
+                              openStudio(world.id)
+                            }
+                            className="mt-4 w-full rounded-lg border border-[#303238] bg-[#212329] py-3 text-xs font-black transition hover:border-cyan-400 hover:bg-cyan-400 hover:text-black"
+                          >
+                            Open in Studio
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+            </div>
+          )}
         </section>
       </div>
     </main>
