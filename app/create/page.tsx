@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../lib/supabase";
+import { supabase } from ".././lib/supabase";
 
 type World = {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
   max_players: number;
   published: boolean;
   created_at: string;
@@ -21,9 +21,7 @@ export default function CreatePage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [menuId, setMenuId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<
-    "mine" | "shared"
-  >("mine");
+  const [activeTab, setActiveTab] = useState<"mine" | "shared">("mine");
 
   useEffect(() => {
     loadExperiences();
@@ -72,20 +70,16 @@ export default function CreatePage() {
 
   function openStudio(id: string) {
     setMenuId(null);
-
     router.push(`/create/studio?world=${id}`);
   }
 
   function playWorld(id: string) {
     setMenuId(null);
-
     router.push(`/play?world=${id}`);
   }
 
   async function deleteWorld(id: string) {
-    const world = worlds.find(
-      (item) => item.id === id
-    );
+    const world = worlds.find((item) => item.id === id);
 
     if (!world) return;
 
@@ -117,9 +111,13 @@ export default function CreatePage() {
 
     if (!query) return true;
 
+    const name = world.name?.toLowerCase() || "";
+    const description =
+      world.description?.toLowerCase() || "";
+
     return (
-      world.name.toLowerCase().includes(query) ||
-      world.description.toLowerCase().includes(query)
+      name.includes(query) ||
+      description.includes(query)
     );
   });
 
@@ -128,10 +126,6 @@ export default function CreatePage() {
       className="min-h-screen bg-[#111214] text-white"
       onClick={() => setMenuId(null)}
     >
-      {/* =====================================================
-          SIDEBAR
-      ====================================================== */}
-
       <aside className="fixed inset-y-0 left-0 hidden w-[250px] border-r border-[#2a2c31] bg-[#18191c] lg:block">
         <div className="flex h-[72px] items-center border-b border-[#2a2c31] px-6">
           <button
@@ -159,8 +153,6 @@ export default function CreatePage() {
             Creations
           </div>
 
-          {/* EXPERIENCES */}
-
           <button
             onClick={() => {
               setActiveTab("mine");
@@ -176,31 +168,21 @@ export default function CreatePage() {
             <span>Experiences</span>
           </button>
 
-          {/* SHARE LINKS */}
-
           <button
-            onClick={() =>
-              router.push("/create/share-links")
-            }
+            onClick={() => router.push("/create/share-links")}
             className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-bold text-slate-400 transition hover:bg-white/5 hover:text-white"
           >
             🔗
             <span>Share Links</span>
           </button>
 
-          {/* AVATAR ITEMS */}
-
           <button
-            onClick={() =>
-              router.push("/create/avatar-items")
-            }
+            onClick={() => router.push("/create/avatar-items")}
             className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-bold text-slate-400 transition hover:bg-white/5 hover:text-white"
           >
             👕
             <span>Avatar Items</span>
           </button>
-
-          {/* DEVELOPMENT ITEMS */}
 
           <button
             onClick={() =>
@@ -224,10 +206,6 @@ export default function CreatePage() {
         </div>
       </aside>
 
-      {/* =====================================================
-          MAIN
-      ====================================================== */}
-
       <div className="lg:ml-[250px]">
         <header className="sticky top-0 z-40 h-[72px] border-b border-[#2a2c31] bg-[#111214]/95 backdrop-blur">
           <div className="flex h-full items-center px-5 sm:px-8">
@@ -238,20 +216,25 @@ export default function CreatePage() {
 
               <input
                 value={search}
-                onChange={(e) =>
-                  setSearch(e.target.value)
-                }
+                onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search Experiences"
                 className="h-10 w-full rounded-lg border border-[#303238] bg-[#1a1b1f] pl-11 pr-4 text-sm outline-none placeholder:text-slate-600 focus:border-cyan-400"
               />
             </div>
 
             <div className="ml-auto flex items-center gap-3">
-              <button className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 hover:bg-white/5 hover:text-white">
+              <button
+                type="button"
+                className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 hover:bg-white/5 hover:text-white"
+              >
                 🔔
               </button>
 
-              <button className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 font-black text-black">
+              <button
+                type="button"
+                onClick={() => router.push("/profile")}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 font-black text-black"
+              >
                 N
               </button>
             </div>
@@ -283,16 +266,12 @@ export default function CreatePage() {
             </div>
 
             <button
-              onClick={() =>
-                router.push("/create/new")
-              }
+              onClick={() => router.push("/create/new")}
               className="rounded-lg bg-cyan-400 px-5 py-3 text-sm font-black text-black hover:bg-cyan-300"
             >
               + Create Experience
             </button>
           </div>
-
-          {/* TABS */}
 
           <div className="mt-8 border-b border-[#292b30]">
             <button
@@ -318,8 +297,6 @@ export default function CreatePage() {
             </button>
           </div>
 
-          {/* SHARED WITH ME */}
-
           {activeTab === "shared" && (
             <div className="mt-8 rounded-xl border border-dashed border-[#303238] bg-[#18191c] p-16 text-center">
               <div className="text-6xl">
@@ -336,8 +313,6 @@ export default function CreatePage() {
               </p>
             </div>
           )}
-
-          {/* MY EXPERIENCES */}
 
           {activeTab === "mine" && (
             <div className="mt-8">
@@ -397,11 +372,17 @@ export default function CreatePage() {
                         className="overflow-visible rounded-xl border border-[#292b30] bg-[#18191c] transition hover:border-[#4a4d55]"
                       >
                         <div className="relative flex h-[190px] items-center justify-center rounded-t-xl bg-gradient-to-br from-[#123049] via-[#1b2532] to-[#2b1b40]">
-                          <div className="text-7xl">
+                          <div className="text-7xl transition duration-300 hover:scale-110">
                             🎮
                           </div>
 
-                          <span className="absolute left-3 top-3 rounded-md bg-black/50 px-2.5 py-1 text-[10px] font-black uppercase text-slate-300">
+                          <span
+                            className={`absolute left-3 top-3 rounded-md px-2.5 py-1 text-[10px] font-black uppercase ${
+                              world.published
+                                ? "bg-emerald-500/20 text-emerald-300"
+                                : "bg-black/50 text-slate-300"
+                            }`}
+                          >
                             {world.published
                               ? "Public"
                               : "Private"}
@@ -409,6 +390,7 @@ export default function CreatePage() {
 
                           <div className="absolute right-3 top-3">
                             <button
+                              type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
 
@@ -431,10 +413,9 @@ export default function CreatePage() {
                                 className="absolute right-0 top-11 z-50 w-48 rounded-xl border border-[#3a3c43] bg-[#202126] p-1.5 shadow-2xl"
                               >
                                 <button
+                                  type="button"
                                   onClick={() =>
-                                    openStudio(
-                                      world.id
-                                    )
+                                    openStudio(world.id)
                                   }
                                   className="w-full rounded-lg px-3 py-3 text-left text-sm font-bold hover:bg-white/10"
                                 >
@@ -442,10 +423,9 @@ export default function CreatePage() {
                                 </button>
 
                                 <button
+                                  type="button"
                                   onClick={() =>
-                                    playWorld(
-                                      world.id
-                                    )
+                                    playWorld(world.id)
                                   }
                                   className="w-full rounded-lg px-3 py-3 text-left text-sm font-bold hover:bg-white/10"
                                 >
@@ -453,6 +433,7 @@ export default function CreatePage() {
                                 </button>
 
                                 <button
+                                  type="button"
                                   onClick={() => {
                                     setMenuId(null);
 
@@ -468,10 +449,9 @@ export default function CreatePage() {
                                 <div className="my-1 border-t border-[#3a3c43]" />
 
                                 <button
+                                  type="button"
                                   onClick={() =>
-                                    deleteWorld(
-                                      world.id
-                                    )
+                                    deleteWorld(world.id)
                                   }
                                   className="w-full rounded-lg px-3 py-3 text-left text-sm font-bold text-red-300 hover:bg-red-500/10"
                                 >
@@ -502,9 +482,8 @@ export default function CreatePage() {
                             </span>
                           </div>
 
-                          {/* FIXED OPEN STUDIO */}
-
                           <button
+                            type="button"
                             onClick={() =>
                               openStudio(world.id)
                             }
