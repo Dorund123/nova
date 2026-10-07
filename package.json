@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@paypal/paypal-server-sdk": "^2.5.0",
+    "@paypal/react-paypal-js": "^10.6.0",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.1",
     "@supabase/supabase-js": "^2.117.2",
@@ -23,7 +25,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.3.6",
+    "eslint-config-next": "^16.3.8",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
