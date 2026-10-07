@@ -469,20 +469,12 @@ export default function HomePage() {
   GET PAYPAL CLIENT TOKEN
   =========================================================
 
-  IMPORTANT:
-
   /api/paypal/create-order/client-token
 
   returns:
 
   {
     clientToken: "..."
-  }
-
-  It does NOT require:
-
-  {
-    success: true
   }
 
   =========================================================
@@ -519,16 +511,6 @@ export default function HomePage() {
   /*
   =========================================================
   CREATE PAYPAL ORDER
-  =========================================================
-
-  Route:
-
-  app/api/paypal/create-order/route.ts
-
-  URL:
-
-  /api/paypal/create-order
-
   =========================================================
   */
 
@@ -574,16 +556,6 @@ export default function HomePage() {
   /*
   =========================================================
   CAPTURE PAYPAL ORDER
-  =========================================================
-
-  Route:
-
-  app/api/paypal/create-order/capture-order/route.ts
-
-  URL:
-
-  /api/paypal/create-order/capture-order
-
   =========================================================
   */
 
@@ -812,6 +784,21 @@ export default function HomePage() {
   =========================================================
   CARD FIELDS
   =========================================================
+
+  IMPORTANT:
+
+  აქ აღარ ვამოწმებთ:
+
+  findEligibleMethods()
+
+  advanced_cards
+
+  რადგან სწორედ ეს ამოწმებდა და აბრუნებდა:
+
+  "Card payment is not available for this PayPal account."
+
+  ახლა პირდაპირ ვცდილობთ Card Fields-ის შექმნას.
+  =========================================================
   */
 
   async function setupCardFields(
@@ -834,34 +821,32 @@ export default function HomePage() {
 
     setCardFieldsReady(false);
 
+    paypalCardSessionRef.current =
+      null;
+
     try {
       const paypalInstance =
         await createPayPalInstance([
           "card-fields",
         ]);
 
-      const methods =
-        await paypalInstance.findEligibleMethods();
-
-      if (
-        !methods ||
-        !methods.isEligible ||
-        !methods.isEligible(
-          "advanced_cards"
-        )
-      ) {
-        setPaymentMessage(
-          "Card payment is not available for this PayPal account."
-        );
-
-        return;
-      }
+      /*
+      =====================================================
+      CREATE CARD SESSION
+      =====================================================
+      */
 
       const cardSession =
         paypalInstance.createCardFieldsOneTimePaymentSession();
 
       paypalCardSessionRef.current =
         cardSession;
+
+      /*
+      =====================================================
+      FIND HTML CONTAINERS
+      =====================================================
+      */
 
       const numberContainer =
         document.getElementById(
@@ -883,14 +868,33 @@ export default function HomePage() {
         !expiryContainer ||
         !cvvContainer
       ) {
+        paypalCardSessionRef.current =
+          null;
+
         setCardFieldsReady(false);
+
+        setPaymentMessage(
+          "Could not find the card fields."
+        );
 
         return;
       }
 
+      /*
+      =====================================================
+      CLEAR OLD FIELDS
+      =====================================================
+      */
+
       numberContainer.innerHTML = "";
       expiryContainer.innerHTML = "";
       cvvContainer.innerHTML = "";
+
+      /*
+      =====================================================
+      CREATE CARD NUMBER
+      =====================================================
+      */
 
       const numberField =
         cardSession.createCardFieldsComponent(
@@ -901,6 +905,12 @@ export default function HomePage() {
           }
         );
 
+      /*
+      =====================================================
+      CREATE EXPIRY
+      =====================================================
+      */
+
       const expiryField =
         cardSession.createCardFieldsComponent(
           {
@@ -910,6 +920,12 @@ export default function HomePage() {
           }
         );
 
+      /*
+      =====================================================
+      CREATE CVV
+      =====================================================
+      */
+
       const cvvField =
         cardSession.createCardFieldsComponent(
           {
@@ -918,6 +934,12 @@ export default function HomePage() {
               "CVV",
           }
         );
+
+      /*
+      =====================================================
+      ADD FIELDS TO PAGE
+      =====================================================
+      */
 
       numberContainer.appendChild(
         numberField
@@ -932,12 +954,16 @@ export default function HomePage() {
       );
 
       /*
-      IMPORTANT:
-      React state is updated here so the
-      Pay button becomes enabled.
+      =====================================================
+      CARD FIELDS READY
+      =====================================================
       */
 
       setCardFieldsReady(true);
+
+      console.log(
+        "PayPal Card Fields loaded successfully."
+      );
     } catch (error) {
       console.error(
         "Card fields error:",
@@ -980,22 +1006,59 @@ export default function HomePage() {
       return;
     }
 
+    if (!profile) {
+      setPaymentMessage(
+        "Please log in first."
+      );
+
+      return;
+    }
+
     setPaymentLoading(true);
     setPaymentMessage("");
 
     try {
+      /*
+      =====================================================
+      CREATE ORDER
+      =====================================================
+      */
+
       const orderID =
         await createPayPalOrder(pkg);
+
+      /*
+      =====================================================
+      SUBMIT CARD
+      =====================================================
+      */
 
       const result =
         await cardSession.submit(
           orderID
         );
 
+      console.log(
+        "Card submit result:",
+        result
+      );
+
+      /*
+      =====================================================
+      GET FINAL ORDER ID
+      =====================================================
+      */
+
       const finalOrderID =
         result?.data?.orderId ||
         result?.orderId ||
         orderID;
+
+      /*
+      =====================================================
+      CAPTURE ORDER
+      =====================================================
+      */
 
       const capture =
         await capturePayPalOrder(
