@@ -14,15 +14,19 @@ async function getPayPalAccessToken() {
     `${clientId}:${clientSecret}`
   ).toString("base64");
 
-  const response = await fetch(`${PAYPAL_API}/v1/oauth2/token`, {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${auth}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: "grant_type=client_credentials",
-    cache: "no-store",
-  });
+  const response = await fetch(
+    `${PAYPAL_API}/v1/oauth2/token`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "application/json",
+      },
+      body: "grant_type=client_credentials",
+      cache: "no-store",
+    }
+  );
 
   const text = await response.text();
 
@@ -32,7 +36,10 @@ async function getPayPalAccessToken() {
     data = JSON.parse(text);
   } catch {
     throw new Error(
-      `PayPal token response was not JSON: ${text.slice(0, 500)}`
+      `PayPal OAuth returned non-JSON response: ${text.slice(
+        0,
+        500
+      )}`
     );
   }
 
@@ -40,7 +47,13 @@ async function getPayPalAccessToken() {
     throw new Error(
       data?.error_description ||
         data?.error ||
-        "Failed to get PayPal access token"
+        `PayPal OAuth failed with status ${response.status}`
+    );
+  }
+
+  if (!data?.access_token) {
+    throw new Error(
+      "PayPal OAuth succeeded but no access token was returned"
     );
   }
 
@@ -57,6 +70,7 @@ export async function GET() {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
+          Accept: "application/json",
           "Content-Type": "application/json",
         },
         cache: "no-store",
@@ -70,8 +84,14 @@ export async function GET() {
     try {
       data = JSON.parse(text);
     } catch {
+      console.error(
+        "PayPal client token returned non-JSON:",
+        text.slice(0, 500)
+      );
+
       return NextResponse.json(
         {
+          success: false,
           error: "PayPal returned a non-JSON response",
           details: text.slice(0, 500),
         },
@@ -80,8 +100,14 @@ export async function GET() {
     }
 
     if (!response.ok) {
+      console.error(
+        "PayPal client token request failed:",
+        data
+      );
+
       return NextResponse.json(
         {
+          success: false,
           error:
             data?.error_description ||
             data?.error ||
@@ -92,8 +118,14 @@ export async function GET() {
     }
 
     if (!data?.client_token) {
+      console.error(
+        "PayPal did not return client_token:",
+        data
+      );
+
       return NextResponse.json(
         {
+          success: false,
           error: "PayPal did not return a client token",
         },
         { status: 502 }
@@ -101,13 +133,18 @@ export async function GET() {
     }
 
     return NextResponse.json({
+      success: true,
       clientToken: data.client_token,
     });
   } catch (error) {
-    console.error("PayPal client token error:", error);
+    console.error(
+      "PayPal client token error:",
+      error
+    );
 
     return NextResponse.json(
       {
+        success: false,
         error:
           error instanceof Error
             ? error.message
