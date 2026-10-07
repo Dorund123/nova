@@ -460,12 +460,25 @@ export default function HomePage() {
   GET PAYPAL CLIENT TOKEN
   =========================================================
 
-  IMPORTANT:
   Route:
   app/api/paypal/create-order/client-token/route.ts
 
   URL:
   /api/paypal/create-order/client-token
+
+  IMPORTANT:
+  This route returns:
+
+  {
+    clientToken: "..."
+  }
+
+  It does NOT return:
+
+  {
+    success: true
+  }
+
   =========================================================
   */
 
@@ -486,7 +499,6 @@ export default function HomePage() {
 
     if (
       !response.ok ||
-      !data.success ||
       !data.clientToken
     ) {
       throw new Error(
@@ -503,7 +515,6 @@ export default function HomePage() {
   CREATE PAYPAL ORDER
   =========================================================
 
-  IMPORTANT:
   Route:
   app/api/paypal/create-order/route.ts
 
@@ -556,7 +567,6 @@ export default function HomePage() {
   CAPTURE PAYPAL ORDER
   =========================================================
 
-  IMPORTANT:
   Route:
   app/api/paypal/create-order/capture-order/route.ts
 
@@ -1035,9 +1045,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-[#f3f3f3] text-[#191919]">
 
-      {/* =====================================================
-          TOP NAVBAR
-      ===================================================== */}
+      {/* TOP NAVBAR */}
 
       <header className="sticky top-0 z-50 h-16 border-b border-gray-200 bg-white">
         <div className="flex h-full items-center px-4">
@@ -1134,9 +1142,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* =====================================================
-          LAYOUT
-      ===================================================== */}
+      {/* LAYOUT */}
 
       <div className="mx-auto flex max-w-[1500px]">
 
@@ -1253,9 +1259,7 @@ export default function HomePage() {
 
         </aside>
 
-        {/* =====================================================
-            MAIN CONTENT
-        ===================================================== */}
+        {/* MAIN CONTENT */}
 
         <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
 
@@ -1389,9 +1393,7 @@ export default function HomePage() {
             </section>
           )}
 
-          {/* =====================================================
-              NOVA STATS
-          ===================================================== */}
+          {/* NOVA STATS */}
 
           <section className="mb-8">
 
@@ -1422,9 +1424,7 @@ export default function HomePage() {
 
           </section>
 
-          {/* =====================================================
-              NOVUX UPGRADER
-          ===================================================== */}
+          {/* NOVUX UPGRADER */}
 
           <section className="mb-12">
 
@@ -1572,9 +1572,7 @@ export default function HomePage() {
 
           </section>
 
-          {/* =====================================================
-              CONTINUE PLAYING
-          ===================================================== */}
+          {/* CONTINUE PLAYING */}
 
           <GameSection
             title="Continue Playing"
@@ -1619,9 +1617,7 @@ export default function HomePage() {
 
           </GameSection>
 
-          {/* =====================================================
-              POPULAR
-          ===================================================== */}
+          {/* POPULAR */}
 
           <GameSection
             title="Popular on Nova"
@@ -1666,9 +1662,7 @@ export default function HomePage() {
 
           </GameSection>
 
-          {/* =====================================================
-              CATEGORIES
-          ===================================================== */}
+          {/* CATEGORIES */}
 
           <section className="mt-12">
 
@@ -1722,9 +1716,7 @@ export default function HomePage() {
 
           </section>
 
-          {/* =====================================================
-              CREATE
-          ===================================================== */}
+          {/* CREATE */}
 
           <section className="mt-12 mb-10">
 
