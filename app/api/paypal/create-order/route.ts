@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const PAYPAL_API = "https://api-m.sandbox.paypal.com";
+const PAYPAL_API =
+  "https://api-m.sandbox.paypal.com";
 
 /*
 =========================================================
@@ -93,7 +94,8 @@ SAFE PAYPAL RESPONSE
 async function readPayPalResponse(
   response: Response
 ) {
-  const text = await response.text();
+  const text =
+    await response.text();
 
   if (!text) {
     return {};
@@ -136,35 +138,41 @@ async function getPayPalAccessToken() {
     `${clientId}:${clientSecret}`
   ).toString("base64");
 
-  const response = await fetch(
-    `${PAYPAL_API}/v1/oauth2/token`,
-    {
-      method: "POST",
+  const response =
+    await fetch(
+      `${PAYPAL_API}/v1/oauth2/token`,
+      {
+        method: "POST",
 
-      headers: {
-        Authorization: `Basic ${auth}`,
+        headers: {
+          Authorization:
+            `Basic ${auth}`,
 
-        "Content-Type":
-          "application/x-www-form-urlencoded",
+          "Content-Type":
+            "application/x-www-form-urlencoded",
 
-        Accept: "application/json",
-      },
+          Accept:
+            "application/json",
+        },
 
-      body:
-        "grant_type=client_credentials",
+        body:
+          "grant_type=client_credentials",
 
-      cache: "no-store",
-    }
-  );
+        cache: "no-store",
+      }
+    );
 
   const data =
-    await readPayPalResponse(response);
+    await readPayPalResponse(
+      response
+    );
 
   if (!response.ok) {
     console.error(
       "PayPal authentication failed:",
       {
-        status: response.status,
+        status:
+          response.status,
         data,
       }
     );
@@ -198,7 +206,9 @@ async function getAuthenticatedUser(
   request: Request
 ) {
   const authorization =
-    request.headers.get("authorization");
+    request.headers.get(
+      "authorization"
+    );
 
   if (!authorization) {
     throw new Error(
@@ -217,7 +227,9 @@ async function getAuthenticatedUser(
   }
 
   const accessToken =
-    authorization.substring(7).trim();
+    authorization
+      .substring(7)
+      .trim();
 
   if (!accessToken) {
     throw new Error(
@@ -233,9 +245,10 @@ async function getAuthenticatedUser(
       user,
     },
     error,
-  } = await supabase.auth.getUser(
-    accessToken
-  );
+  } =
+    await supabase.auth.getUser(
+      accessToken
+    );
 
   if (error || !user) {
     console.error(
@@ -325,7 +338,9 @@ async function createPayPalOrder(
                 currency_code: "USD",
 
                 value:
-                  packageData.price.toFixed(2),
+                  packageData.price.toFixed(
+                    2
+                  ),
               },
             },
           ],
@@ -380,7 +395,8 @@ async function createPayPalOrder(
 
   if (
     !orderData ||
-    typeof orderData.id !== "string"
+    typeof orderData.id !==
+      "string"
   ) {
     console.error(
       "PayPal order ID missing:",
@@ -469,7 +485,8 @@ async function capturePayPalOrder(
 
   if (
     !orderID ||
-    typeof orderID !== "string"
+    typeof orderID !==
+      "string"
   ) {
     throw new Error(
       "PayPal order ID is missing."
@@ -563,7 +580,8 @@ async function capturePayPalOrder(
   */
 
   if (
-    captureData?.status !== "COMPLETED"
+    captureData?.status !==
+    "COMPLETED"
   ) {
     console.error(
       "PayPal capture not completed:",
@@ -602,9 +620,12 @@ async function capturePayPalOrder(
 
   const capture =
     Array.isArray(
-      purchaseUnit?.payments?.captures
+      purchaseUnit?.payments
+        ?.captures
     )
-      ? purchaseUnit.payments.captures[0]
+      ? purchaseUnit
+          .payments
+          .captures[0]
       : null;
 
   if (!capture) {
@@ -620,7 +641,8 @@ async function capturePayPalOrder(
   */
 
   if (
-    capture.status !== "COMPLETED"
+    capture.status !==
+    "COMPLETED"
   ) {
     console.error(
       "Capture status is not COMPLETED:",
@@ -642,7 +664,8 @@ async function capturePayPalOrder(
     purchaseUnit?.custom_id;
 
   if (
-    typeof customID !== "string"
+    typeof customID !==
+    "string"
   ) {
     throw new Error(
       "Novux package information is missing from the PayPal order."
@@ -650,7 +673,9 @@ async function capturePayPalOrder(
   }
 
   if (
-    !customID.startsWith("novux_")
+    !customID.startsWith(
+      "novux_"
+    )
   ) {
     throw new Error(
       "Invalid Novux package information."
@@ -691,8 +716,10 @@ async function capturePayPalOrder(
 
   const paypalAmount =
     Number(
-      capture?.amount?.value ??
-        purchaseUnit?.amount?.value ??
+      capture?.amount
+        ?.value ??
+        purchaseUnit
+          ?.amount?.value ??
         0
     );
 
@@ -700,8 +727,11 @@ async function capturePayPalOrder(
     packageData.price;
 
   if (
-    !Number.isFinite(paypalAmount) ||
-    paypalAmount !== expectedAmount
+    !Number.isFinite(
+      paypalAmount
+    ) ||
+    paypalAmount !==
+      expectedAmount
   ) {
     console.error(
       "PayPal amount mismatch:",
@@ -735,7 +765,8 @@ async function capturePayPalOrder(
 
   const {
     data: profile,
-    error: profileError,
+    error:
+      profileError,
   } = await supabase
     .from("profiles")
     .select(
@@ -763,7 +794,8 @@ async function capturePayPalOrder(
 
   const currentBalance =
     Number(
-      profile?.novux_balance ?? 0
+      profile?.novux_balance ??
+        0
     );
 
   if (
@@ -953,7 +985,8 @@ export async function POST(
 
     if (
       !body ||
-      typeof body !== "object"
+      typeof body !==
+        "object"
     ) {
       return NextResponse.json(
         {
@@ -976,7 +1009,7 @@ export async function POST(
 
     /*
     =====================================================
-    3. ACTION
+    3. READ ACTION
     =====================================================
     */
 
@@ -988,13 +1021,51 @@ export async function POST(
 
     /*
     =====================================================
+    4. DETERMINE REQUEST TYPE
+    =====================================================
+    */
+
+    /*
+    IMPORTANT:
+    The current frontend sends:
+
+    CREATE:
+    {
+      novux: 300
+    }
+
+    CAPTURE:
+    {
+      orderID: "..."
+    }
+
+    Therefore we support both the explicit
+    action format AND the current frontend format.
+    */
+
+    const hasNovux =
+      requestBody.novux !==
+        undefined &&
+      requestBody.novux !==
+        null;
+
+    const hasOrderID =
+      typeof requestBody.orderID ===
+        "string" &&
+      requestBody.orderID.trim()
+        .length > 0;
+
+    /*
+    =====================================================
     CREATE ORDER
     =====================================================
     */
 
     if (
       action ===
-      "create-order"
+        "create-order" ||
+      (!action &&
+        hasNovux)
     ) {
       const novux =
         Number(
@@ -1008,7 +1079,9 @@ export async function POST(
       */
 
       if (
-        !Number.isFinite(novux)
+        !Number.isFinite(
+          novux
+        )
       ) {
         return NextResponse.json(
           {
@@ -1079,7 +1152,9 @@ export async function POST(
 
     if (
       action ===
-      "capture-order"
+        "capture-order" ||
+      (!action &&
+        hasOrderID)
     ) {
       const orderID =
         typeof requestBody.orderID ===
@@ -1134,7 +1209,7 @@ export async function POST(
         success: false,
 
         error:
-          "Invalid PayPal action. Use create-order or capture-order.",
+          "Invalid PayPal request. Send novux for create-order or orderID for capture-order.",
       },
       {
         status: 400,
