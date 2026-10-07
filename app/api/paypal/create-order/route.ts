@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const PAYPAL_API =
-  "https://api-m.sandbox.paypal.com";
+const PAYPAL_API = "https://api-m.sandbox.paypal.com";
 
 /*
 =========================================================
@@ -87,15 +86,14 @@ function getSupabaseAdmin() {
 
 /*
 =========================================================
-SAFE PAYPAL RESPONSE
+SAFE RESPONSE READER
 =========================================================
 */
 
-async function readPayPalResponse(
+async function readResponse(
   response: Response
 ) {
-  const text =
-    await response.text();
+  const text = await response.text();
 
   if (!text) {
     return {};
@@ -105,7 +103,7 @@ async function readPayPalResponse(
     return JSON.parse(text);
   } catch {
     console.error(
-      "PayPal returned non-JSON response:",
+      "Non-JSON response:",
       text.slice(0, 1000)
     );
 
@@ -138,43 +136,36 @@ async function getPayPalAccessToken() {
     `${clientId}:${clientSecret}`
   ).toString("base64");
 
-  const response =
-    await fetch(
-      `${PAYPAL_API}/v1/oauth2/token`,
-      {
-        method: "POST",
+  const response = await fetch(
+    `${PAYPAL_API}/v1/oauth2/token`,
+    {
+      method: "POST",
 
-        headers: {
-          Authorization:
-            `Basic ${auth}`,
+      headers: {
+        Authorization:
+          `Basic ${auth}`,
 
-          "Content-Type":
-            "application/x-www-form-urlencoded",
+        "Content-Type":
+          "application/x-www-form-urlencoded",
 
-          Accept:
-            "application/json",
-        },
+        Accept:
+          "application/json",
+      },
 
-        body:
-          "grant_type=client_credentials",
+      body:
+        "grant_type=client_credentials",
 
-        cache: "no-store",
-      }
-    );
+      cache: "no-store",
+    }
+  );
 
   const data =
-    await readPayPalResponse(
-      response
-    );
+    await readResponse(response);
 
   if (!response.ok) {
     console.error(
       "PayPal authentication failed:",
-      {
-        status:
-          response.status,
-        data,
-      }
+      data
     );
 
     throw new Error(
@@ -182,23 +173,22 @@ async function getPayPalAccessToken() {
     );
   }
 
-  if (!data?.access_token) {
-    console.error(
-      "PayPal access token missing:",
-      data
-    );
-
+  if (
+    !data ||
+    typeof data.access_token !==
+      "string"
+  ) {
     throw new Error(
       "PayPal did not return an access token."
     );
   }
 
-  return data.access_token as string;
+  return data.access_token;
 }
 
 /*
 =========================================================
-GET LOGGED IN SUPABASE USER
+GET AUTHENTICATED USER
 =========================================================
 */
 
@@ -210,19 +200,14 @@ async function getAuthenticatedUser(
       "authorization"
     );
 
-  if (!authorization) {
-    throw new Error(
-      "Authorization header is missing."
-    );
-  }
-
   if (
+    !authorization ||
     !authorization
       .toLowerCase()
       .startsWith("bearer ")
   ) {
     throw new Error(
-      "Invalid authorization header."
+      "Authorization header is missing or invalid."
     );
   }
 
@@ -275,7 +260,7 @@ async function createPayPalOrder(
 ) {
   /*
   =======================================================
-  GET PACKAGE
+  CHECK PACKAGE
   =======================================================
   */
 
@@ -299,7 +284,19 @@ async function createPayPalOrder(
 
   /*
   =======================================================
-  CREATE ORDER
+  IMPORTANT PACKAGE IDENTIFIER
+  =======================================================
+  */
+
+  const customId =
+    `novux_${packageData.novux}`;
+
+  const referenceId =
+    `nova-novux-${packageData.novux}`;
+
+  /*
+  =======================================================
+  CREATE PAYPAL ORDER
   =======================================================
   */
 
@@ -328,14 +325,18 @@ async function createPayPalOrder(
 
           purchase_units: [
             {
-              description:
-                `${novux.toLocaleString()} Novux`,
+              reference_id:
+                referenceId,
 
               custom_id:
-                `novux_${novux}`,
+                customId,
+
+              description:
+                `${packageData.novux.toLocaleString()} Novux`,
 
               amount: {
-                currency_code: "USD",
+                currency_code:
+                  "USD",
 
                 value:
                   packageData.price.toFixed(
@@ -352,18 +353,18 @@ async function createPayPalOrder(
 
   /*
   =======================================================
-  READ RESPONSE
+  READ PAYPAL RESPONSE
   =======================================================
   */
 
   const orderData =
-    await readPayPalResponse(
+    await readResponse(
       orderResponse
     );
 
   /*
   =======================================================
-  PAYPAL ERROR
+  CHECK PAYPAL RESPONSE
   =======================================================
   */
 
@@ -389,7 +390,7 @@ async function createPayPalOrder(
 
   /*
   =======================================================
-  ORDER ID
+  CHECK ORDER ID
   =======================================================
   */
 
@@ -410,7 +411,7 @@ async function createPayPalOrder(
 
   /*
   =======================================================
-  LOG
+  LOG ORDER
   =======================================================
   */
 
@@ -438,8 +439,24 @@ async function createPayPalOrder(
   );
 
   console.log(
+    "Custom ID:",
+    customId
+  );
+
+  console.log(
+    "Reference ID:",
+    referenceId
+  );
+
+  console.log(
     "================================="
   );
+
+  /*
+  =======================================================
+  RETURN
+  =======================================================
+  */
 
   return {
     orderID:
@@ -453,6 +470,12 @@ async function createPayPalOrder(
 
     currency:
       "USD",
+
+    customID:
+      customId,
+
+    referenceID:
+      referenceId,
   };
 }
 
@@ -495,7 +518,7 @@ async function capturePayPalOrder(
 
   /*
   =======================================================
-  3. GET PAYPAL ACCESS TOKEN
+  3. GET PAYPAL TOKEN
   =======================================================
   */
 
@@ -504,7 +527,195 @@ async function capturePayPalOrder(
 
   /*
   =======================================================
-  4. CAPTURE PAYPAL ORDER
+  4. GET ORDER BEFORE CAPTURE
+  =======================================================
+  */
+
+  const orderResponse =
+    await fetch(
+      `${PAYPAL_API}/v2/checkout/orders/${encodeURIComponent(
+        orderID
+      )}`,
+      {
+        method: "GET",
+
+        headers: {
+          Authorization:
+            `Bearer ${accessToken}`,
+
+          Accept:
+            "application/json",
+        },
+
+        cache: "no-store",
+      }
+    );
+
+  const orderData =
+    await readResponse(
+      orderResponse
+    );
+
+  if (!orderResponse.ok) {
+    console.error(
+      "PayPal order lookup failed:",
+      orderData
+    );
+
+    throw new Error(
+      "Could not find the PayPal order."
+    );
+  }
+
+  /*
+  =======================================================
+  5. FIND PURCHASE UNIT
+  =======================================================
+  */
+
+  const purchaseUnit =
+    Array.isArray(
+      orderData?.purchase_units
+    )
+      ? orderData.purchase_units[0]
+      : null;
+
+  if (!purchaseUnit) {
+    throw new Error(
+      "PayPal purchase information is missing."
+    );
+  }
+
+  /*
+  =======================================================
+  6. READ CUSTOM ID
+  =======================================================
+  */
+
+  const customID =
+    purchaseUnit?.custom_id;
+
+  console.log(
+    "PayPal order custom_id:",
+    customID
+  );
+
+  /*
+  =======================================================
+  7. VALIDATE CUSTOM ID
+  =======================================================
+  */
+
+  if (
+    typeof customID !==
+      "string" ||
+    !customID.startsWith(
+      "novux_"
+    )
+  ) {
+    console.error(
+      "Invalid PayPal custom_id:",
+      {
+        customID,
+        orderData,
+      }
+    );
+
+    throw new Error(
+      "Invalid Novux package."
+    );
+  }
+
+  /*
+  =======================================================
+  8. GET NOVUX AMOUNT
+  =======================================================
+  */
+
+  const novuxText =
+    customID.substring(
+      "novux_".length
+    );
+
+  const novux =
+    Number(novuxText);
+
+  /*
+  =======================================================
+  9. VALIDATE PACKAGE
+  =======================================================
+  */
+
+  const packageData =
+    PACKAGES[novux];
+
+  if (
+    !Number.isFinite(novux) ||
+    !packageData
+  ) {
+    console.error(
+      "Invalid Novux package:",
+      {
+        customID,
+        novux,
+      }
+    );
+
+    throw new Error(
+      "Invalid Novux package."
+    );
+  }
+
+  /*
+  =======================================================
+  10. VERIFY ORDER AMOUNT
+  =======================================================
+  */
+
+  const orderAmount =
+    Number(
+      purchaseUnit?.amount?.value
+    );
+
+  const orderCurrency =
+    purchaseUnit
+      ?.amount
+      ?.currency_code;
+
+  if (
+    !Number.isFinite(
+      orderAmount
+    ) ||
+    orderAmount !==
+      packageData.price
+  ) {
+    console.error(
+      "PayPal order amount mismatch:",
+      {
+        orderAmount,
+        expected:
+          packageData.price,
+        novux,
+      }
+    );
+
+    throw new Error(
+      "Payment amount does not match the selected Novux package."
+    );
+  }
+
+  if (
+    orderCurrency !==
+    "USD"
+  ) {
+    throw new Error(
+      "Invalid payment currency."
+    );
+  }
+
+  /*
+  =======================================================
+  11. CAPTURE ORDER
   =======================================================
   */
 
@@ -530,26 +741,21 @@ async function capturePayPalOrder(
             `capture-${orderID}`,
         },
 
-        body: JSON.stringify({}),
+        body:
+          JSON.stringify({}),
 
         cache: "no-store",
       }
     );
 
-  /*
-  =======================================================
-  5. READ PAYPAL RESPONSE
-  =======================================================
-  */
-
   const captureData =
-    await readPayPalResponse(
+    await readResponse(
       captureResponse
     );
 
   /*
   =======================================================
-  6. PAYPAL CAPTURE ERROR
+  12. CAPTURE ERROR
   =======================================================
   */
 
@@ -559,9 +765,6 @@ async function capturePayPalOrder(
       {
         status:
           captureResponse.status,
-
-        statusText:
-          captureResponse.statusText,
 
         data:
           captureData,
@@ -575,7 +778,7 @@ async function capturePayPalOrder(
 
   /*
   =======================================================
-  7. CHECK CAPTURE STATUS
+  13. VERIFY CAPTURE STATUS
   =======================================================
   */
 
@@ -584,7 +787,7 @@ async function capturePayPalOrder(
     "COMPLETED"
   ) {
     console.error(
-      "PayPal capture not completed:",
+      "PayPal capture status:",
       captureData
     );
 
@@ -595,35 +798,24 @@ async function capturePayPalOrder(
 
   /*
   =======================================================
-  8. FIND PURCHASE UNIT
+  14. FIND CAPTURE
   =======================================================
   */
 
-  const purchaseUnit =
+  const capturedPurchaseUnit =
     Array.isArray(
       captureData?.purchase_units
     )
       ? captureData.purchase_units[0]
       : null;
 
-  if (!purchaseUnit) {
-    throw new Error(
-      "PayPal purchase information is missing."
-    );
-  }
-
-  /*
-  =======================================================
-  9. FIND CAPTURE
-  =======================================================
-  */
-
   const capture =
     Array.isArray(
-      purchaseUnit?.payments
+      capturedPurchaseUnit
+        ?.payments
         ?.captures
     )
-      ? purchaseUnit
+      ? capturedPurchaseUnit
           .payments
           .captures[0]
       : null;
@@ -636,7 +828,7 @@ async function capturePayPalOrder(
 
   /*
   =======================================================
-  10. VERIFY CAPTURE STATUS
+  15. VERIFY CAPTURE
   =======================================================
   */
 
@@ -644,113 +836,52 @@ async function capturePayPalOrder(
     capture.status !==
     "COMPLETED"
   ) {
-    console.error(
-      "Capture status is not COMPLETED:",
-      capture
-    );
-
     throw new Error(
       "PayPal capture was not completed."
     );
   }
 
-  /*
-  =======================================================
-  11. GET NOVUX FROM CUSTOM ID
-  =======================================================
-  */
-
-  const customID =
-    purchaseUnit?.custom_id;
-
-  if (
-    typeof customID !==
-    "string"
-  ) {
-    throw new Error(
-      "Novux package information is missing from the PayPal order."
-    );
-  }
-
-  if (
-    !customID.startsWith(
-      "novux_"
-    )
-  ) {
-    throw new Error(
-      "Invalid Novux package information."
-    );
-  }
-
-  const novux =
+  const paidAmount =
     Number(
-      customID.replace(
-        "novux_",
-        ""
-      )
+      capture?.amount?.value
     );
 
-  /*
-  =======================================================
-  12. VALIDATE NOVUX
-  =======================================================
-  */
+  const paidCurrency =
+    capture
+      ?.amount
+      ?.currency_code;
 
   if (
-    !Number.isFinite(novux) ||
-    !PACKAGES[novux]
-  ) {
-    throw new Error(
-      "Invalid Novux package."
-    );
-  }
-
-  const packageData =
-    PACKAGES[novux];
-
-  /*
-  =======================================================
-  13. VERIFY PAYPAL PRICE
-  =======================================================
-  */
-
-  const paypalAmount =
-    Number(
-      capture?.amount
-        ?.value ??
-        purchaseUnit
-          ?.amount?.value ??
-        0
-    );
-
-  const expectedAmount =
-    packageData.price;
-
-  if (
-    !Number.isFinite(
-      paypalAmount
-    ) ||
-    paypalAmount !==
-      expectedAmount
+    paidAmount !==
+    packageData.price
   ) {
     console.error(
-      "PayPal amount mismatch:",
+      "Capture amount mismatch:",
       {
-        paypalAmount,
-        expectedAmount,
+        paidAmount,
+        expected:
+          packageData.price,
         novux,
-        orderID,
       }
     );
 
     throw new Error(
-      "Payment amount does not match the selected Novux package."
+      "Invalid payment amount."
+    );
+  }
+
+  if (
+    paidCurrency !==
+    "USD"
+  ) {
+    throw new Error(
+      "Invalid payment currency."
     );
   }
 
   /*
   =======================================================
-  14. GET SUPABASE ADMIN
+  16. SUPABASE
   =======================================================
   */
 
@@ -759,7 +890,7 @@ async function capturePayPalOrder(
 
   /*
   =======================================================
-  15. GET CURRENT PROFILE
+  17. GET PROFILE
   =======================================================
   */
 
@@ -767,17 +898,21 @@ async function capturePayPalOrder(
     data: profile,
     error:
       profileError,
-  } = await supabase
-    .from("profiles")
-    .select(
-      "id, username, novux_balance"
-    )
-    .eq("id", user.id)
-    .single();
+  } =
+    await supabase
+      .from("profiles")
+      .select(
+        "id, username, novux_balance"
+      )
+      .eq(
+        "id",
+        user.id
+      )
+      .single();
 
   if (profileError) {
     console.error(
-      "Could not find user profile:",
+      "Profile error:",
       profileError
     );
 
@@ -788,7 +923,7 @@ async function capturePayPalOrder(
 
   /*
   =======================================================
-  16. CURRENT BALANCE
+  18. CURRENT BALANCE
   =======================================================
   */
 
@@ -810,49 +945,54 @@ async function capturePayPalOrder(
 
   /*
   =======================================================
-  17. NEW BALANCE
+  19. NEW BALANCE
   =======================================================
   */
 
   const newBalance =
-    currentBalance + novux;
+    currentBalance +
+    packageData.novux;
 
   /*
   =======================================================
-  18. UPDATE NOVUX BALANCE
+  20. UPDATE BALANCE
   =======================================================
   */
 
   const {
     data: updatedProfile,
     error:
-      updateProfileError,
-  } = await supabase
-    .from("profiles")
-    .update({
-      novux_balance:
-        newBalance,
-    })
-    .eq("id", user.id)
-    .select(
-      "id, username, novux_balance"
-    )
-    .single();
+      updateError,
+  } =
+    await supabase
+      .from("profiles")
+      .update({
+        novux_balance:
+          newBalance,
+      })
+      .eq(
+        "id",
+        user.id
+      )
+      .select(
+        "id, username, novux_balance"
+      )
+      .single();
 
-  if (updateProfileError) {
+  if (updateError) {
     console.error(
-      "Could not update Novux balance:",
-      updateProfileError
+      "Novux balance update error:",
+      updateError
     );
 
     throw new Error(
-      "Payment succeeded, but Novux could not be added to your account. Please contact support."
+      "Payment succeeded, but Novux could not be added to your account."
     );
   }
 
   /*
   =======================================================
-  19. SUCCESS LOG
+  21. SUCCESS LOG
   =======================================================
   */
 
@@ -861,7 +1001,7 @@ async function capturePayPalOrder(
   );
 
   console.log(
-    "PAYPAL PAYMENT COMPLETED"
+    "NOVUX PURCHASE SUCCESS"
   );
 
   console.log(
@@ -870,33 +1010,23 @@ async function capturePayPalOrder(
   );
 
   console.log(
-    "Username:",
-    profile.username
-  );
-
-  console.log(
-    "Order ID:",
+    "Order:",
     orderID
   );
 
   console.log(
-    "Capture ID:",
+    "Capture:",
     capture.id
   );
 
   console.log(
-    "Novux Added:",
-    novux
+    "Custom ID:",
+    customID
   );
 
   console.log(
-    "Old Balance:",
-    currentBalance
-  );
-
-  console.log(
-    "New Balance:",
-    newBalance
+    "Novux:",
+    packageData.novux
   );
 
   console.log(
@@ -905,12 +1035,22 @@ async function capturePayPalOrder(
   );
 
   console.log(
+    "Old balance:",
+    currentBalance
+  );
+
+  console.log(
+    "New balance:",
+    newBalance
+  );
+
+  console.log(
     "================================="
   );
 
   /*
   =======================================================
-  20. RETURN SUCCESS
+  22. RETURN
   =======================================================
   */
 
@@ -922,7 +1062,8 @@ async function capturePayPalOrder(
     captureID:
       capture.id,
 
-    novux,
+    novux:
+      packageData.novux,
 
     price:
       packageData.price,
@@ -934,9 +1075,6 @@ async function capturePayPalOrder(
       currentBalance,
 
     newBalance,
-
-    userID:
-      user.id,
 
     profile:
       updatedProfile,
@@ -955,7 +1093,7 @@ export async function POST(
   try {
     /*
     =====================================================
-    1. READ JSON
+    READ JSON
     =====================================================
     */
 
@@ -979,7 +1117,7 @@ export async function POST(
 
     /*
     =====================================================
-    2. CHECK BODY
+    VALIDATE BODY
     =====================================================
     */
 
@@ -1009,7 +1147,7 @@ export async function POST(
 
     /*
     =====================================================
-    3. READ ACTION
+    ACTION
     =====================================================
     */
 
@@ -1021,26 +1159,8 @@ export async function POST(
 
     /*
     =====================================================
-    4. DETERMINE REQUEST TYPE
+    CREATE DETECTION
     =====================================================
-    */
-
-    /*
-    IMPORTANT:
-    The current frontend sends:
-
-    CREATE:
-    {
-      novux: 300
-    }
-
-    CAPTURE:
-    {
-      orderID: "..."
-    }
-
-    Therefore we support both the explicit
-    action format AND the current frontend format.
     */
 
     const hasNovux =
@@ -1048,6 +1168,12 @@ export async function POST(
         undefined &&
       requestBody.novux !==
         null;
+
+    /*
+    =====================================================
+    CAPTURE DETECTION
+    =====================================================
+    */
 
     const hasOrderID =
       typeof requestBody.orderID ===
@@ -1072,12 +1198,6 @@ export async function POST(
           requestBody.novux
         );
 
-      /*
-      ===============================================
-      VALIDATE NOVUX
-      ===============================================
-      */
-
       if (
         !Number.isFinite(
           novux
@@ -1095,12 +1215,6 @@ export async function POST(
         );
       }
 
-      /*
-      ===============================================
-      CHECK PACKAGE
-      ===============================================
-      */
-
       if (
         !PACKAGES[novux]
       ) {
@@ -1115,12 +1229,6 @@ export async function POST(
           }
         );
       }
-
-      /*
-      ===============================================
-      CREATE PAYPAL ORDER
-      ===============================================
-      */
 
       const result =
         await createPayPalOrder(
@@ -1141,6 +1249,12 @@ export async function POST(
 
         currency:
           result.currency,
+
+        customID:
+          result.customID,
+
+        referenceID:
+          result.referenceID,
       });
     }
 
@@ -1162,12 +1276,6 @@ export async function POST(
           ? requestBody.orderID.trim()
           : "";
 
-      /*
-      ===============================================
-      VALIDATE ORDER ID
-      ===============================================
-      */
-
       if (!orderID) {
         return NextResponse.json(
           {
@@ -1180,12 +1288,6 @@ export async function POST(
           }
         );
       }
-
-      /*
-      ===============================================
-      CAPTURE
-      ===============================================
-      */
 
       const result =
         await capturePayPalOrder(
@@ -1200,14 +1302,13 @@ export async function POST(
 
     /*
     =====================================================
-    INVALID ACTION
+    INVALID REQUEST
     =====================================================
     */
 
     return NextResponse.json(
       {
         success: false,
-
         error:
           "Invalid PayPal request. Send novux for create-order or orderID for capture-order.",
       },
