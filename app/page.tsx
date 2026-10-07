@@ -47,6 +47,15 @@ export default function HomePage() {
   const [paymentMessage, setPaymentMessage] =
     useState("");
 
+  /*
+  =========================================================
+  CARD FIELDS READY
+  =========================================================
+  */
+
+  const [cardFieldsReady, setCardFieldsReady] =
+    useState(false);
+
   const paypalCardSessionRef =
     useRef<any>(null);
 
@@ -460,20 +469,17 @@ export default function HomePage() {
   GET PAYPAL CLIENT TOKEN
   =========================================================
 
-  Route:
-  app/api/paypal/create-order/client-token/route.ts
+  IMPORTANT:
 
-  URL:
   /api/paypal/create-order/client-token
 
-  IMPORTANT:
-  This route returns:
+  returns:
 
   {
     clientToken: "..."
   }
 
-  It does NOT return:
+  It does NOT require:
 
   {
     success: true
@@ -516,10 +522,13 @@ export default function HomePage() {
   =========================================================
 
   Route:
+
   app/api/paypal/create-order/route.ts
 
   URL:
+
   /api/paypal/create-order
+
   =========================================================
   */
 
@@ -568,10 +577,13 @@ export default function HomePage() {
   =========================================================
 
   Route:
+
   app/api/paypal/create-order/capture-order/route.ts
 
   URL:
+
   /api/paypal/create-order/capture-order
+
   =========================================================
   */
 
@@ -730,6 +742,10 @@ export default function HomePage() {
 
                     paypalCardSessionRef.current =
                       null;
+
+                    setCardFieldsReady(
+                      false
+                    );
                   }, 2500);
                 }
               } catch (error) {
@@ -816,6 +832,8 @@ export default function HomePage() {
       return;
     }
 
+    setCardFieldsReady(false);
+
     try {
       const paypalInstance =
         await createPayPalInstance([
@@ -865,6 +883,8 @@ export default function HomePage() {
         !expiryContainer ||
         !cvvContainer
       ) {
+        setCardFieldsReady(false);
+
         return;
       }
 
@@ -910,11 +930,24 @@ export default function HomePage() {
       cvvContainer.appendChild(
         cvvField
       );
+
+      /*
+      IMPORTANT:
+      React state is updated here so the
+      Pay button becomes enabled.
+      */
+
+      setCardFieldsReady(true);
     } catch (error) {
       console.error(
         "Card fields error:",
         error
       );
+
+      paypalCardSessionRef.current =
+        null;
+
+      setCardFieldsReady(false);
 
       setPaymentMessage(
         error instanceof Error
@@ -936,7 +969,10 @@ export default function HomePage() {
     const cardSession =
       paypalCardSessionRef.current;
 
-    if (!cardSession) {
+    if (
+      !cardSession ||
+      !cardFieldsReady
+    ) {
       setPaymentMessage(
         "Card payment is not ready yet."
       );
@@ -980,6 +1016,8 @@ export default function HomePage() {
 
           paypalCardSessionRef.current =
             null;
+
+          setCardFieldsReady(false);
         }, 2500);
       }
     } catch (error) {
@@ -1020,6 +1058,8 @@ export default function HomePage() {
 
     paypalCardSessionRef.current =
       null;
+
+    setCardFieldsReady(false);
 
     setTimeout(() => {
       setupCardFields(pkg);
@@ -1947,6 +1987,8 @@ export default function HomePage() {
               paypalCardSessionRef.current =
                 null;
 
+              setCardFieldsReady(false);
+
               setPaymentMessage("");
             }
           }}
@@ -1995,6 +2037,10 @@ export default function HomePage() {
 
                     paypalCardSessionRef.current =
                       null;
+
+                    setCardFieldsReady(
+                      false
+                    );
 
                     setPaymentMessage("");
                   }}
@@ -2127,7 +2173,7 @@ export default function HomePage() {
                   disabled={
                     paymentLoading ||
                     !paypalReady ||
-                    !paypalCardSessionRef.current
+                    !cardFieldsReady
                   }
                   onClick={() =>
                     payWithCard(
@@ -2138,6 +2184,8 @@ export default function HomePage() {
                 >
                   {paymentLoading
                     ? "Processing Payment..."
+                    : !cardFieldsReady
+                    ? "Loading Card Fields..."
                     : `Pay $${selectedPackage.price.toFixed(
                         2
                       )}`}
