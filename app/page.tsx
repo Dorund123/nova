@@ -115,15 +115,17 @@ export default function HomePage() {
     );
 
     script.onload = () => {
-      setPaypalReady(
-        Boolean(window.paypal)
-      );
+      if (window.paypal) {
+        setPaypalReady(true);
+      }
     };
 
     script.onerror = () => {
       console.error(
         "Could not load PayPal SDK."
       );
+
+      setPaypalReady(false);
 
       setPaymentMessage(
         "PayPal could not be loaded. Please refresh the page."
@@ -187,7 +189,9 @@ export default function HomePage() {
       return;
     }
 
-    setProfile(data);
+    if (data) {
+      setProfile(data);
+    }
   }
 
   /*
@@ -455,12 +459,20 @@ export default function HomePage() {
   =========================================================
   GET PAYPAL CLIENT TOKEN
   =========================================================
+
+  IMPORTANT:
+  Route:
+  app/api/paypal/create-order/client-token/route.ts
+
+  URL:
+  /api/paypal/create-order/client-token
+  =========================================================
   */
 
   async function getPayPalClientToken() {
     const response =
       await fetch(
-        "/api/paypal",
+        "/api/paypal/create-order/client-token",
         {
           method: "GET",
           cache: "no-store",
@@ -490,6 +502,14 @@ export default function HomePage() {
   =========================================================
   CREATE PAYPAL ORDER
   =========================================================
+
+  IMPORTANT:
+  Route:
+  app/api/paypal/create-order/route.ts
+
+  URL:
+  /api/paypal/create-order
+  =========================================================
   */
 
   async function createPayPalOrder(
@@ -497,7 +517,7 @@ export default function HomePage() {
   ) {
     const response =
       await fetch(
-        "/api/paypal",
+        "/api/paypal/create-order",
         {
           method: "POST",
 
@@ -507,7 +527,6 @@ export default function HomePage() {
           },
 
           body: JSON.stringify({
-            action: "create-order",
             novux: pkg.amount,
           }),
         }
@@ -536,6 +555,14 @@ export default function HomePage() {
   =========================================================
   CAPTURE PAYPAL ORDER
   =========================================================
+
+  IMPORTANT:
+  Route:
+  app/api/paypal/create-order/capture-order/route.ts
+
+  URL:
+  /api/paypal/create-order/capture-order
+  =========================================================
   */
 
   async function capturePayPalOrder(
@@ -553,7 +580,7 @@ export default function HomePage() {
 
     const response =
       await fetch(
-        "/api/paypal",
+        "/api/paypal/create-order/capture-order",
         {
           method: "POST",
 
@@ -566,7 +593,6 @@ export default function HomePage() {
           },
 
           body: JSON.stringify({
-            action: "capture-order",
             orderID,
           }),
         }
@@ -691,6 +717,9 @@ export default function HomePage() {
                     );
 
                     setPaymentMessage("");
+
+                    paypalCardSessionRef.current =
+                      null;
                   }, 2500);
                 }
               } catch (error) {
@@ -787,6 +816,8 @@ export default function HomePage() {
         await paypalInstance.findEligibleMethods();
 
       if (
+        !methods ||
+        !methods.isEligible ||
         !methods.isEligible(
           "advanced_cards"
         )
@@ -917,6 +948,7 @@ export default function HomePage() {
 
       const finalOrderID =
         result?.data?.orderId ||
+        result?.orderId ||
         orderID;
 
       const capture =
@@ -933,7 +965,9 @@ export default function HomePage() {
 
         setTimeout(() => {
           setSelectedPackage(null);
+
           setPaymentMessage("");
+
           paypalCardSessionRef.current =
             null;
         }, 2500);
@@ -964,7 +998,7 @@ export default function HomePage() {
     amount: number,
     price: number
   ) {
-    const pkg = {
+    const pkg: NovuxPackageData = {
       amount,
       price,
       label: `${amount.toLocaleString()} Novux`,
@@ -979,7 +1013,7 @@ export default function HomePage() {
 
     setTimeout(() => {
       setupCardFields(pkg);
-    }, 500);
+    }, 700);
   }
 
   /*
@@ -1001,7 +1035,10 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-[#f3f3f3] text-[#191919]">
 
-      {/* TOP NAVBAR */}
+      {/* =====================================================
+          TOP NAVBAR
+      ===================================================== */}
+
       <header className="sticky top-0 z-50 h-16 border-b border-gray-200 bg-white">
         <div className="flex h-full items-center px-4">
 
@@ -1012,6 +1049,7 @@ export default function HomePage() {
             <span className="text-black">
               N
             </span>
+
             <span className="text-blue-600">
               ova
             </span>
@@ -1096,10 +1134,14 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* LAYOUT */}
+      {/* =====================================================
+          LAYOUT
+      ===================================================== */}
+
       <div className="mx-auto flex max-w-[1500px]">
 
         {/* SIDEBAR */}
+
         <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 shrink-0 border-r border-gray-200 bg-white p-4 lg:block">
 
           <div className="space-y-1">
@@ -1211,10 +1253,14 @@ export default function HomePage() {
 
         </aside>
 
-        {/* MAIN CONTENT */}
+        {/* =====================================================
+            MAIN CONTENT
+        ===================================================== */}
+
         <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
 
           {/* MOBILE SEARCH */}
+
           <div className="mb-6 md:hidden">
 
             <div className="relative">
@@ -1237,6 +1283,7 @@ export default function HomePage() {
           </div>
 
           {/* WELCOME */}
+
           {profile && (
             <section className="mb-8">
 
@@ -1342,7 +1389,10 @@ export default function HomePage() {
             </section>
           )}
 
-          {/* NOVA STATS */}
+          {/* =====================================================
+              NOVA STATS
+          ===================================================== */}
+
           <section className="mb-8">
 
             <div className="grid gap-4 sm:grid-cols-3">
@@ -1372,7 +1422,10 @@ export default function HomePage() {
 
           </section>
 
-          {/* NOVUX UPGRADER FEATURE */}
+          {/* =====================================================
+              NOVUX UPGRADER
+          ===================================================== */}
+
           <section className="mb-12">
 
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-950 via-gray-900 to-blue-950 p-6 text-white shadow-2xl sm:p-8">
@@ -1391,6 +1444,7 @@ export default function HomePage() {
 
                   <h2 className="text-3xl font-black sm:text-4xl">
                     Risk your Novux.
+
                     <span className="block text-blue-400">
                       Win more.
                     </span>
@@ -1452,6 +1506,7 @@ export default function HomePage() {
                     className="group w-full rounded-2xl bg-blue-600 px-8 py-5 text-sm font-black text-white shadow-xl shadow-blue-900/30 transition hover:scale-105 hover:bg-blue-500 lg:w-auto"
                   >
                     <span className="flex items-center justify-center gap-3">
+
                       <span className="text-xl">
                         ⚡
                       </span>
@@ -1461,6 +1516,7 @@ export default function HomePage() {
                       <span className="transition-transform group-hover:translate-x-1">
                         →
                       </span>
+
                     </span>
                   </button>
 
@@ -1516,7 +1572,10 @@ export default function HomePage() {
 
           </section>
 
-          {/* CONTINUE PLAYING */}
+          {/* =====================================================
+              CONTINUE PLAYING
+          ===================================================== */}
+
           <GameSection
             title="Continue Playing"
             subtitle="Jump back into your recent games."
@@ -1560,7 +1619,10 @@ export default function HomePage() {
 
           </GameSection>
 
-          {/* POPULAR */}
+          {/* =====================================================
+              POPULAR
+          ===================================================== */}
+
           <GameSection
             title="Popular on Nova"
             subtitle="Games players are checking out."
@@ -1604,7 +1666,10 @@ export default function HomePage() {
 
           </GameSection>
 
-          {/* CATEGORIES */}
+          {/* =====================================================
+              CATEGORIES
+          ===================================================== */}
+
           <section className="mt-12">
 
             <div className="mb-5">
@@ -1657,7 +1722,10 @@ export default function HomePage() {
 
           </section>
 
-          {/* CREATE */}
+          {/* =====================================================
+              CREATE
+          ===================================================== */}
+
           <section className="mt-12 mb-10">
 
             <div className="overflow-hidden rounded-2xl bg-gradient-to-r from-gray-900 to-gray-800 text-white">
@@ -1883,8 +1951,11 @@ export default function HomePage() {
           onClick={() => {
             if (!paymentLoading) {
               setSelectedPackage(null);
+
               paypalCardSessionRef.current =
                 null;
+
+              setPaymentMessage("");
             }
           }}
         >
@@ -1932,6 +2003,8 @@ export default function HomePage() {
 
                     paypalCardSessionRef.current =
                       null;
+
+                    setPaymentMessage("");
                   }}
                   className="rounded-xl px-3 py-2 text-xl text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
                 >
@@ -2117,7 +2190,9 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* CHANGE USERNAME MODAL */}
+      {/* =========================================================
+          CHANGE USERNAME MODAL
+      ========================================================= */}
 
       {showUsernameEditor && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
