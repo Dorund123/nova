@@ -2,77 +2,38 @@ import { NextResponse } from "next/server";
 
 const PAYPAL_API = "https://api-m.sandbox.paypal.com";
 
-async function getPayPalAccessToken() {
-  const clientId = process.env.PAYPAL_CLIENT_ID;
-  const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
-
-  if (!clientId || !clientSecret) {
-    throw new Error("PayPal credentials are missing");
-  }
-
-  const auth = Buffer.from(
-    `${clientId}:${clientSecret}`
-  ).toString("base64");
-
-  const response = await fetch(
-    `${PAYPAL_API}/v1/oauth2/token`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${auth}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-        Accept: "application/json",
-      },
-      body: "grant_type=client_credentials",
-      cache: "no-store",
-    }
-  );
-
-  const text = await response.text();
-
-  let data: any;
-
-  try {
-    data = JSON.parse(text);
-  } catch {
-    throw new Error(
-      `PayPal OAuth returned non-JSON response: ${text.slice(
-        0,
-        500
-      )}`
-    );
-  }
-
-  if (!response.ok) {
-    throw new Error(
-      data?.error_description ||
-        data?.error ||
-        `PayPal OAuth failed with status ${response.status}`
-    );
-  }
-
-  if (!data?.access_token) {
-    throw new Error(
-      "PayPal OAuth succeeded but no access token was returned"
-    );
-  }
-
-  return data.access_token;
-}
-
 export async function GET() {
   try {
-    const accessToken = await getPayPalAccessToken();
+    const clientId = process.env.PAYPAL_CLIENT_ID;
+    const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
 
+    if (!clientId || !clientSecret) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "PayPal credentials are missing",
+        },
+        { status: 500 }
+      );
+    }
+
+    const auth = Buffer.from(
+      `${clientId}:${clientSecret}`
+    ).toString("base64");
+
+    // PayPal browser-safe client token
     const response = await fetch(
-      `${PAYPAL_API}/v1/identity/generate-token`,
+      `${PAYPAL_API}/v1/oauth2/token`,
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Basic ${auth}`,
+          "Content-Type":
+            "application/x-www-form-urlencoded",
           Accept: "application/json",
-          "Content-Type": "application/json",
         },
+        body:
+          "grant_type=client_credentials&response_type=client_token&intent=sdk_init",
         cache: "no-store",
       }
     );
@@ -85,15 +46,15 @@ export async function GET() {
       data = JSON.parse(text);
     } catch {
       console.error(
-        "PayPal client token returned non-JSON:",
+        "PayPal OAuth non-JSON:",
         text.slice(0, 500)
       );
 
       return NextResponse.json(
         {
           success: false,
-          error: "PayPal returned a non-JSON response",
-          details: text.slice(0, 500),
+          error:
+            "PayPal returned a non-JSON response",
         },
         { status: 502 }
       );
@@ -101,7 +62,7 @@ export async function GET() {
 
     if (!response.ok) {
       console.error(
-        "PayPal client token request failed:",
+        "PayPal OAuth failed:",
         data
       );
 
@@ -111,22 +72,23 @@ export async function GET() {
           error:
             data?.error_description ||
             data?.error ||
-            "Failed to generate PayPal client token",
+            "PayPal authentication failed",
         },
         { status: response.status }
       );
     }
 
-    if (!data?.client_token) {
+    if (!data?.access_token) {
       console.error(
-        "PayPal did not return client_token:",
+        "PayPal did not return access_token:",
         data
       );
 
       return NextResponse.json(
         {
           success: false,
-          error: "PayPal did not return a client token",
+          error:
+            "PayPal did not return a client token",
         },
         { status: 502 }
       );
@@ -134,7 +96,7 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      clientToken: data.client_token,
+      clientToken: data.access_token,
     });
   } catch (error) {
     console.error(
