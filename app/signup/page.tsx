@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
-import FaceScan from "../FaceScan";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -14,8 +13,6 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [gender, setGender] = useState<"Boy" | "Girl" | "">("");
-
-  const [faceScan, setFaceScan] = useState<string | null>(null);
 
   const [showPassword, setShowPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -63,11 +60,6 @@ export default function SignupPage() {
 
     if (!gender) {
       setMessage("Please select your gender.");
-      return;
-    }
-
-    if (!faceScan) {
-      setMessage("Please complete the face scan.");
       return;
     }
 
@@ -122,10 +114,6 @@ export default function SignupPage() {
             username: cleanUsername,
             display_name: cleanDisplayName,
             gender,
-
-            // Face scan is completed, but the original image
-            // is NOT stored in Supabase at this stage.
-            face_scanned: true,
           },
         },
       });
@@ -251,37 +239,6 @@ export default function SignupPage() {
                   Girl
                 </button>
               </div>
-            </div>
-
-            {/* FACE SCAN */}
-            <div>
-              {!faceScan ? (
-                <FaceScan
-                  onComplete={(imageData) => {
-                    setFaceScan(imageData);
-                  }}
-                />
-              ) : (
-                <div className="rounded-2xl border border-green-500/20 bg-green-500/10 p-5 text-center">
-                  <div className="mb-3 text-5xl">✅</div>
-
-                  <h3 className="font-semibold text-white">
-                    Face scan complete
-                  </h3>
-
-                  <p className="mt-2 text-sm text-gray-400">
-                    Your face scan is ready for your Nova avatar.
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={() => setFaceScan(null)}
-                    className="mt-4 rounded-lg px-4 py-2 text-sm text-cyan-400 transition hover:bg-white/5"
-                  >
-                    Scan Again
-                  </button>
-                </div>
-              )}
             </div>
 
             <div>
