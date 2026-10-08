@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "./lib/supabase";
 
@@ -23,40 +28,283 @@ type NovuxPackageData = {
   label: string;
 };
 
+/* =========================================================
+   PAYPAL PRODUCTION SDK
+========================================================= */
+
+const PAYPAL_SDK_URL =
+  "https://www.paypal.com/web-sdk/v6/core";
+
 /*
-=========================================================
-BILLING COUNTRY LIST
-=========================================================
+  This marker helps confirm that the live deployment
+  is running THIS version of page.tsx.
 */
+const PAYPAL_BUILD_MARKER =
+  "NOVA_PAYPAL_DIRECT_CLIENT_ID_2026_10_09";
+
+/* =========================================================
+   BILLING COUNTRY LIST
+========================================================= */
 
 const COUNTRY_CODES = [
-  "AF","AX","AL","DZ","AS","AD","AO","AI","AQ","AG","AR","AM","AW","AU","AT",
-  "AZ","BS","BH","BD","BB","BY","BE","BZ","BJ","BM","BT","BO","BQ","BA","BW",
-  "BV","BR","IO","BN","BG","BF","BI","CV","KH","CM","CA","KY","CF","TD","CL",
-  "CN","CX","CC","CO","KM","CG","CD","CK","CR","CI","HR","CU","CW","CY","CZ",
-  "DK","DJ","DM","DO","EC","EG","SV","GQ","ER","EE","SZ","ET","FK","FO","FJ",
-  "FI","FR","GF","PF","TF","GA","GM","GE","DE","GH","GI","GR","GL","GD","GP",
-  "GU","GT","GG","GN","GW","GY","HT","HM","VA","HN","HK","HU","IS","IN","ID",
-  "IR","IQ","IE","IM","IL","IT","JM","JP","JE","JO","KZ","KE","KI","KP","KR",
-  "KW","KG","LA","LV","LB","LS","LR","LY","LI","LT","LU","MO","MG","MW","MY",
-  "MV","ML","MT","MH","MQ","MR","MU","YT","MX","FM","MD","MC","MN","ME","MS",
-  "MA","MZ","MM","NA","NR","NP","NL","NC","NZ","NI","NE","NG","NU","NF","MK",
-  "MP","NO","OM","PK","PW","PS","PA","PG","PY","PE","PH","PN","PL","PT","PR",
-  "QA","RE","RO","RU","RW","BL","SH","KN","LC","MF","PM","VC","WS","SM","ST",
-  "SA","SN","RS","SC","SL","SG","SX","SK","SI","SB","SO","ZA","GS","SS","ES",
-  "LK","SD","SR","SJ","SE","CH","SY","TW","TJ","TZ","TH","TL","TG","TK","TO",
-  "TT","TN","TR","TM","TC","TV","UG","UA","AE","GB","US","UM","UY","UZ","VU",
-  "VE","VN","VG","VI","WF","EH","YE","ZM","ZW",
+  "AF",
+  "AX",
+  "AL",
+  "DZ",
+  "AS",
+  "AD",
+  "AO",
+  "AI",
+  "AQ",
+  "AG",
+  "AR",
+  "AM",
+  "AW",
+  "AU",
+  "AT",
+  "AZ",
+  "BS",
+  "BH",
+  "BD",
+  "BB",
+  "BY",
+  "BE",
+  "BZ",
+  "BJ",
+  "BM",
+  "BT",
+  "BO",
+  "BQ",
+  "BA",
+  "BW",
+  "BV",
+  "BR",
+  "IO",
+  "BN",
+  "BG",
+  "BF",
+  "BI",
+  "CV",
+  "KH",
+  "CM",
+  "CA",
+  "KY",
+  "CF",
+  "TD",
+  "CL",
+  "CN",
+  "CX",
+  "CC",
+  "CO",
+  "KM",
+  "CG",
+  "CD",
+  "CK",
+  "CR",
+  "CI",
+  "HR",
+  "CU",
+  "CW",
+  "CY",
+  "CZ",
+  "DK",
+  "DJ",
+  "DM",
+  "DO",
+  "EC",
+  "EG",
+  "SV",
+  "GQ",
+  "ER",
+  "EE",
+  "SZ",
+  "ET",
+  "FK",
+  "FO",
+  "FJ",
+  "FI",
+  "FR",
+  "GF",
+  "PF",
+  "TF",
+  "GA",
+  "GM",
+  "GE",
+  "DE",
+  "GH",
+  "GI",
+  "GR",
+  "GL",
+  "GD",
+  "GP",
+  "GU",
+  "GT",
+  "GG",
+  "GN",
+  "GW",
+  "GY",
+  "HT",
+  "HM",
+  "VA",
+  "HN",
+  "HK",
+  "HU",
+  "IS",
+  "IN",
+  "ID",
+  "IR",
+  "IQ",
+  "IE",
+  "IM",
+  "IL",
+  "IT",
+  "JM",
+  "JP",
+  "JE",
+  "JO",
+  "KZ",
+  "KE",
+  "KI",
+  "KP",
+  "KR",
+  "KW",
+  "KG",
+  "LA",
+  "LV",
+  "LB",
+  "LS",
+  "LR",
+  "LY",
+  "LI",
+  "LT",
+  "LU",
+  "MO",
+  "MG",
+  "MW",
+  "MY",
+  "MV",
+  "ML",
+  "MT",
+  "MH",
+  "MQ",
+  "MR",
+  "MU",
+  "YT",
+  "MX",
+  "FM",
+  "MD",
+  "MC",
+  "MN",
+  "ME",
+  "MS",
+  "MA",
+  "MZ",
+  "MM",
+  "NA",
+  "NR",
+  "NP",
+  "NL",
+  "NC",
+  "NZ",
+  "NI",
+  "NE",
+  "NG",
+  "NU",
+  "NF",
+  "MK",
+  "MP",
+  "NO",
+  "OM",
+  "PK",
+  "PW",
+  "PS",
+  "PA",
+  "PG",
+  "PY",
+  "PE",
+  "PH",
+  "PN",
+  "PL",
+  "PT",
+  "PR",
+  "QA",
+  "RE",
+  "RO",
+  "RU",
+  "RW",
+  "BL",
+  "SH",
+  "KN",
+  "LC",
+  "MF",
+  "PM",
+  "VC",
+  "WS",
+  "SM",
+  "ST",
+  "SA",
+  "SN",
+  "RS",
+  "SC",
+  "SL",
+  "SG",
+  "SX",
+  "SK",
+  "SI",
+  "SB",
+  "SO",
+  "ZA",
+  "GS",
+  "SS",
+  "ES",
+  "LK",
+  "SD",
+  "SR",
+  "SJ",
+  "SE",
+  "CH",
+  "SY",
+  "TW",
+  "TJ",
+  "TZ",
+  "TH",
+  "TL",
+  "TG",
+  "TK",
+  "TO",
+  "TT",
+  "TN",
+  "TR",
+  "TM",
+  "TC",
+  "TV",
+  "UG",
+  "UA",
+  "AE",
+  "GB",
+  "US",
+  "UM",
+  "UY",
+  "UZ",
+  "VU",
+  "VE",
+  "VN",
+  "VG",
+  "VI",
+  "WF",
+  "EH",
+  "YE",
+  "ZM",
+  "ZW",
 ] as const;
 
 const COUNTRY_OPTIONS = COUNTRY_CODES
   .map((code) => ({
     code,
     name:
-      new Intl.DisplayNames(
-        ["en"],
-        { type: "region" }
-      ).of(code) || code,
+      new Intl.DisplayNames(["en"], {
+        type: "region",
+      }).of(code) || code,
   }))
   .sort((a, b) =>
     a.name.localeCompare(b.name)
@@ -92,12 +340,6 @@ export default function HomePage() {
   const [cardFieldsReady, setCardFieldsReady] =
     useState(false);
 
-  /*
-  =========================================================
-  BILLING ADDRESS
-  =========================================================
-  */
-
   const [billingPostalCode, setBillingPostalCode] =
     useState("");
 
@@ -109,6 +351,9 @@ export default function HomePage() {
 
   const paypalScriptLoadedRef =
     useRef(false);
+
+  const paypalLoadingPromiseRef =
+    useRef<Promise<boolean> | null>(null);
 
   const [newUsername, setNewUsername] =
     useState("");
@@ -128,62 +373,43 @@ export default function HomePage() {
   const [onlineCount, setOnlineCount] =
     useState(0);
 
-  /*
-  =========================================================
-  LOAD PAYPAL SDK
-  =========================================================
-  */
+  /* =========================================================
+     PAYPAL SDK LOADER
+  ========================================================= */
 
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
 
-    if (paypalScriptLoadedRef.current) {
-      return;
-    }
-
-    paypalScriptLoadedRef.current = true;
-
-    const existingScript =
-      document.querySelector(
-        'script[data-paypal-v6="true"]'
-      );
-
-    if (existingScript) {
-      if (window.paypal) {
-        setPaypalReady(true);
-      }
-
-      return;
-    }
-
-    const script =
-      document.createElement("script");
-
-    script.src =
-      "https://www.sandbox.paypal.com/web-sdk/v6/core";
-
-    script.async = true;
-
-    script.setAttribute(
-      "data-paypal-v6",
-      "true"
+    console.log(
+      "PayPal deployment build marker:",
+      PAYPAL_BUILD_MARKER
     );
 
-    script.onload = () => {
+    const handleLoaded = () => {
       if (window.paypal) {
         console.log(
-          "PayPal SDK loaded successfully."
+          "PayPal Production SDK loaded successfully."
         );
 
         setPaypalReady(true);
+      } else {
+        console.error(
+          "PayPal SDK loaded but window.paypal is missing."
+        );
+
+        setPaypalReady(false);
+
+        setPaymentMessage(
+          "PayPal could not be initialized. Please refresh the page."
+        );
       }
     };
 
-    script.onerror = () => {
+    const handleError = () => {
       console.error(
-        "Could not load PayPal SDK."
+        "Could not load PayPal Production SDK."
       );
 
       setPaypalReady(false);
@@ -193,14 +419,85 @@ export default function HomePage() {
       );
     };
 
-    document.body.appendChild(script);
+    const existingScript =
+      document.querySelector(
+        'script[data-paypal-v6="true"]'
+      ) as HTMLScriptElement | null;
+
+    if (existingScript) {
+      if (window.paypal) {
+        handleLoaded();
+      } else {
+        existingScript.addEventListener(
+          "load",
+          handleLoaded,
+          {
+            once: true,
+          }
+        );
+
+        existingScript.addEventListener(
+          "error",
+          handleError,
+          {
+            once: true,
+          }
+        );
+      }
+
+      return () => {
+        existingScript.removeEventListener(
+          "load",
+          handleLoaded
+        );
+
+        existingScript.removeEventListener(
+          "error",
+          handleError
+        );
+      };
+    }
+
+    if (paypalScriptLoadedRef.current) {
+      return;
+    }
+
+    paypalScriptLoadedRef.current = true;
+
+    const script =
+      document.createElement(
+        "script"
+      );
+
+    script.src =
+      PAYPAL_SDK_URL;
+
+    script.async = true;
+
+    script.setAttribute(
+      "data-paypal-v6",
+      "true"
+    );
+
+    script.onload =
+      handleLoaded;
+
+    script.onerror =
+      handleError;
+
+    document.body.appendChild(
+      script
+    );
+
+    return () => {
+      script.onload = null;
+      script.onerror = null;
+    };
   }, []);
 
-  /*
-  =========================================================
-  LOAD USER / STATS
-  =========================================================
-  */
+  /* =========================================================
+     LOAD USER / STATS
+  ========================================================= */
 
   useEffect(() => {
     loadUser();
@@ -208,24 +505,27 @@ export default function HomePage() {
     updateOnlineStatus();
     loadStats();
 
-    const interval = setInterval(() => {
-      updateOnlineStatus();
-      loadStats();
-    }, 30000);
+    const interval =
+      setInterval(() => {
+        updateOnlineStatus();
+        loadStats();
+      }, 30000);
 
-    return () => clearInterval(interval);
+    return () =>
+      clearInterval(
+        interval
+      );
   }, []);
 
-  /*
-  =========================================================
-  LOAD USER
-  =========================================================
-  */
+  /* =========================================================
+     LOAD USER
+  ========================================================= */
 
   async function loadUser() {
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } =
+      await supabase.auth.getUser();
 
     if (!user) {
       router.push("/login");
@@ -238,7 +538,10 @@ export default function HomePage() {
         .select(
           "username, display_name, avatar_url, novux_balance"
         )
-        .eq("id", user.id)
+        .eq(
+          "id",
+          user.id
+        )
         .maybeSingle();
 
     if (error) {
@@ -251,15 +554,32 @@ export default function HomePage() {
     }
 
     if (data) {
-      setProfile(data);
+      setProfile({
+        username:
+          data.username ??
+          "",
+
+        display_name:
+          data.display_name ??
+          data.username ??
+          "",
+
+        avatar_url:
+          data.avatar_url ??
+          null,
+
+        novux_balance:
+          Number(
+            data.novux_balance ??
+              0
+          ),
+      });
     }
   }
 
-  /*
-  =========================================================
-  LOAD STATS
-  =========================================================
-  */
+  /* =========================================================
+     LOAD STATS
+  ========================================================= */
 
   async function loadStats() {
     const { data, error } =
@@ -274,23 +594,35 @@ export default function HomePage() {
       );
     } else {
       setOnlineCount(
-        Number(data?.online ?? 0)
+        Number(
+          data?.online ??
+            0
+        )
       );
 
       setVisitedCount(
-        Number(data?.visits ?? 0)
+        Number(
+          data?.visits ??
+            0
+        )
       );
     }
 
     const {
       count,
-      error: registeredError,
-    } = await supabase
-      .from("profiles")
-      .select("*", {
-        count: "exact",
-        head: true,
-      });
+      error:
+        registeredError,
+    } =
+      await supabase
+        .from("profiles")
+        .select(
+          "*",
+          {
+            count:
+              "exact",
+            head: true,
+          }
+        );
 
     if (registeredError) {
       console.error(
@@ -301,17 +633,20 @@ export default function HomePage() {
       return;
     }
 
-    setRegisteredCount(count ?? 0);
+    setRegisteredCount(
+      count ?? 0
+    );
   }
 
-  /*
-  =========================================================
-  REGISTER VISIT
-  =========================================================
-  */
+  /* =========================================================
+     REGISTER VISIT
+  ========================================================= */
 
   async function registerVisitOnce() {
-    if (typeof window === "undefined") {
+    if (
+      typeof window ===
+      "undefined"
+    ) {
       return;
     }
 
@@ -320,7 +655,10 @@ export default function HomePage() {
         "nova_site_visited"
       );
 
-    if (alreadyVisited === "true") {
+    if (
+      alreadyVisited ===
+      "true"
+    ) {
       return;
     }
 
@@ -344,20 +682,21 @@ export default function HomePage() {
     );
 
     setVisitedCount(
-      Number(data ?? 0)
+      Number(
+        data ?? 0
+      )
     );
   }
 
-  /*
-  =========================================================
-  ONLINE STATUS
-  =========================================================
-  */
+  /* =========================================================
+     ONLINE STATUS
+  ========================================================= */
 
   async function updateOnlineStatus() {
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } =
+      await supabase.auth.getUser();
 
     if (!user) {
       return;
@@ -376,11 +715,9 @@ export default function HomePage() {
     }
   }
 
-  /*
-  =========================================================
-  CHANGE USERNAME
-  =========================================================
-  */
+  /* =========================================================
+     CHANGE USERNAME
+  ========================================================= */
 
   async function changeUsername() {
     const username =
@@ -390,7 +727,10 @@ export default function HomePage() {
       return;
     }
 
-    if (username.length < 3) {
+    if (
+      username.length <
+      3
+    ) {
       setUsernameMessage(
         "Username must be at least 3 characters."
       );
@@ -398,7 +738,10 @@ export default function HomePage() {
       return;
     }
 
-    if (username.length > 20) {
+    if (
+      username.length >
+      20
+    ) {
       setUsernameMessage(
         "Username must be maximum 20 characters."
       );
@@ -430,7 +773,8 @@ export default function HomePage() {
     }
 
     if (
-      profile.novux_balance < 1000
+      profile.novux_balance <
+      1000
     ) {
       setUsernameMessage(
         "❌ You need 1,000 Novux to change your username."
@@ -439,27 +783,37 @@ export default function HomePage() {
       return;
     }
 
-    setChangingUsername(true);
+    setChangingUsername(
+      true
+    );
+
     setUsernameMessage("");
 
     const { data, error } =
       await supabase.rpc(
         "change_username",
         {
-          new_username: username,
+          new_username:
+            username,
         }
       );
 
     if (error) {
-      setChangingUsername(false);
+      setChangingUsername(
+        false
+      );
 
       if (
         error.message
           .toLowerCase()
-          .includes("already") ||
+          .includes(
+            "already"
+          ) ||
         error.message
           .toLowerCase()
-          .includes("duplicate")
+          .includes(
+            "duplicate"
+          )
       ) {
         setUsernameMessage(
           "❌ This username is already taken."
@@ -475,22 +829,32 @@ export default function HomePage() {
 
     setProfile({
       ...profile,
-      username: data.username,
+
+      username:
+        data.username,
+
       novux_balance:
-        data.novux_balance,
+        Number(
+          data.novux_balance
+        ),
     });
 
     setNewUsername("");
-    setShowUsernameEditor(false);
-    setChangingUsername(false);
+
+    setShowUsernameEditor(
+      false
+    );
+
+    setChangingUsername(
+      false
+    );
+
     setUsernameMessage("");
   }
 
-  /*
-  =========================================================
-  SAFE JSON READER
-  =========================================================
-  */
+  /* =========================================================
+     SAFE JSON READER
+  ========================================================= */
 
   async function readApiResponse(
     response: Response
@@ -502,59 +866,132 @@ export default function HomePage() {
       return {};
     }
 
-    try {
-      return JSON.parse(text);
-    } catch {
+    const contentType =
+      response.headers.get(
+        "content-type"
+      ) || "";
+
+    if (
+      contentType.includes(
+        "text/html"
+      ) ||
+      text
+        .trimStart()
+        .startsWith(
+          "<!DOCTYPE"
+        ) ||
+      text
+        .trimStart()
+        .startsWith(
+          "<html"
+        )
+    ) {
       console.error(
-        "API returned non-JSON response:",
-        text.slice(0, 1000)
+        "API returned HTML instead of JSON:",
+        text.slice(
+          0,
+          1000
+        )
       );
 
       throw new Error(
-        `Server returned invalid response (${response.status}).`
+        `Server returned an invalid response (${response.status}). Check the API route and Vercel deployment.`
+      );
+    }
+
+    try {
+      return JSON.parse(
+        text
+      );
+    } catch {
+      console.error(
+        "API returned invalid JSON:",
+        text.slice(
+          0,
+          1000
+        )
+      );
+
+      throw new Error(
+        `Server returned invalid JSON (${response.status}).`
       );
     }
   }
 
-  /*
-  =========================================================
-  GET PAYPAL CLIENT TOKEN
-  =========================================================
-  */
+  /* =========================================================
+     WAIT FOR PAYPAL SDK
+  ========================================================= */
 
-  async function getPayPalClientToken() {
-    const response =
-      await fetch(
-        "/api/paypal/create-order/client-token",
-        {
-          method: "GET",
-          cache: "no-store",
+  async function waitForPayPalSDK(
+    timeoutMs = 12000
+  ) {
+    if (
+      typeof window !==
+        "undefined" &&
+      window.paypal
+    ) {
+      return true;
+    }
+
+    if (
+      paypalLoadingPromiseRef.current
+    ) {
+      return paypalLoadingPromiseRef.current;
+    }
+
+    const promise =
+      new Promise<boolean>(
+        (resolve) => {
+          const start =
+            Date.now();
+
+          const check =
+            () => {
+              if (
+                typeof window !==
+                  "undefined" &&
+                window.paypal
+              ) {
+                resolve(true);
+                return;
+              }
+
+              if (
+                Date.now() -
+                  start >=
+                timeoutMs
+              ) {
+                resolve(
+                  false
+                );
+
+                return;
+              }
+
+              window.setTimeout(
+                check,
+                250
+              );
+            };
+
+          check();
         }
       );
 
-    const data =
-      await readApiResponse(
-        response
-      );
+    paypalLoadingPromiseRef.current =
+      promise;
 
-    if (
-      !response.ok ||
-      !data.clientToken
-    ) {
-      throw new Error(
-        data?.error ||
-          "Could not get PayPal client token."
-      );
+    try {
+      return await promise;
+    } finally {
+      paypalLoadingPromiseRef.current =
+        null;
     }
-
-    return data.clientToken;
   }
 
-  /*
-  =========================================================
-  CREATE PAYPAL ORDER
-  =========================================================
-  */
+  /* =========================================================
+     CREATE PAYPAL ORDER
+  ========================================================= */
 
   async function createPayPalOrder(
     pkg: NovuxPackageData
@@ -563,16 +1000,22 @@ export default function HomePage() {
       await fetch(
         "/api/paypal/create-order",
         {
-          method: "POST",
+          method:
+            "POST",
 
           headers: {
             "Content-Type":
               "application/json",
+
+            Accept:
+              "application/json",
           },
 
-          body: JSON.stringify({
-            novux: pkg.amount,
-          }),
+          body:
+            JSON.stringify({
+              novux:
+                pkg.amount,
+            }),
         }
       );
 
@@ -581,51 +1024,153 @@ export default function HomePage() {
         response
       );
 
+    const orderID =
+      data?.orderID ||
+      data?.id;
+
     if (
       !response.ok ||
       !data.success ||
-      !data.orderID
+      !orderID
     ) {
       throw new Error(
         data?.error ||
+          data?.message ||
           "Could not create PayPal order."
       );
     }
 
-    return data.orderID;
+    return orderID;
   }
 
-  /*
-  =========================================================
-  PAYPAL ERROR TRANSLATOR
-  =========================================================
-  */
+  /* =========================================================
+     RECURSIVE ERROR TEXT EXTRACTOR
+  ========================================================= */
+
+  function collectErrorStrings(
+    value: any,
+    depth = 0
+  ): string[] {
+    if (
+      depth > 5 ||
+      value === null ||
+      value === undefined
+    ) {
+      return [];
+    }
+
+    if (
+      typeof value ===
+      "string"
+    ) {
+      return [value];
+    }
+
+    if (
+      typeof value ===
+        "number" ||
+      typeof value ===
+        "boolean"
+    ) {
+      return [
+        String(
+          value
+        ),
+      ];
+    }
+
+    if (
+      Array.isArray(
+        value
+      )
+    ) {
+      return value.flatMap(
+        (item) =>
+          collectErrorStrings(
+            item,
+            depth + 1
+          )
+      );
+    }
+
+    if (
+      typeof value ===
+      "object"
+    ) {
+      const result: string[] =
+        [];
+
+      for (
+        const key of [
+          "error",
+          "message",
+          "name",
+          "code",
+          "issue",
+          "description",
+          "details",
+          "status_details",
+          "reason",
+        ]
+      ) {
+        if (
+          key in value
+        ) {
+          result.push(
+            ...collectErrorStrings(
+              value[key],
+              depth + 1
+            )
+          );
+        }
+      }
+
+      return result;
+    }
+
+    return [];
+  }
+
+  /* =========================================================
+     PAYPAL ERROR TRANSLATOR
+  ========================================================= */
 
   function getPaymentErrorMessage(
     data: any,
     fallback: string
   ) {
-    const rawMessage =
-      data?.error ||
-      data?.message ||
-      data?.details?.[0]?.description ||
-      data?.capture?.status_details?.reason ||
-      data?.captureStatusDetails?.reason ||
-      "";
+    const texts =
+      collectErrorStrings(
+        data
+      );
 
     const normalized =
-      String(rawMessage)
+      texts
+        .join(
+          " | "
+        )
         .toLowerCase();
 
+    console.error(
+      "PayPal error details:",
+      {
+        texts,
+        data,
+      }
+    );
+
     if (
+      normalized.includes(
+        "insufficient_funds"
+      ) ||
+      normalized.includes(
+        "insufficient funds"
+      ) ||
       normalized.includes(
         "insufficient"
       ) ||
       normalized.includes(
-        "fund"
-      ) ||
-      normalized.includes(
-        "balance"
+        "5120"
       )
     ) {
       return "Payment declined because the card does not have enough funds.";
@@ -633,16 +1178,11 @@ export default function HomePage() {
 
     if (
       normalized.includes(
-        "declin"
+        "card_expired"
       ) ||
       normalized.includes(
-        "denied"
-      )
-    ) {
-      return "Payment was declined. Please check your card details or use another card.";
-    }
-
-    if (
+        "expired card"
+      ) ||
       normalized.includes(
         "expired"
       )
@@ -652,10 +1192,27 @@ export default function HomePage() {
 
     if (
       normalized.includes(
-        "invalid"
-      ) &&
+        "cvv"
+      ) ||
       normalized.includes(
-        "card"
+        "security code"
+      ) ||
+      normalized.includes(
+        "invalid_card_verification"
+      )
+    ) {
+      return "Payment failed because the card security code is invalid.";
+    }
+
+    if (
+      normalized.includes(
+        "invalid card"
+      ) ||
+      normalized.includes(
+        "card details are invalid"
+      ) ||
+      normalized.includes(
+        "invalid_card"
       )
     ) {
       return "Payment failed because the card details are invalid.";
@@ -663,35 +1220,100 @@ export default function HomePage() {
 
     if (
       normalized.includes(
-        "cvv"
+        "instrument_declined"
       ) ||
       normalized.includes(
-        "security code"
+        "instrument declined"
       )
     ) {
-      return "Payment failed because the card security code is invalid.";
+      return "Payment was declined. Please check your card details or use another card.";
     }
 
+    if (
+      normalized.includes(
+        "payment_method"
+      ) &&
+      normalized.includes(
+        "declin"
+      )
+    ) {
+      return "Payment was declined. Please check your card details or use another card.";
+    }
+
+    if (
+      normalized.includes(
+        "declin"
+      ) ||
+      normalized.includes(
+        "denied"
+      ) ||
+      normalized.includes(
+        "transaction refused"
+      )
+    ) {
+      return "Payment was declined. Please check your card details or use another card.";
+    }
+
+    if (
+      normalized.includes(
+        "billing"
+      ) &&
+      normalized.includes(
+        "address"
+      )
+    ) {
+      return "Payment failed because the billing address could not be verified.";
+    }
+
+    if (
+      normalized.includes(
+        "payer_cannot_pay"
+      ) ||
+      normalized.includes(
+        "payer cannot pay"
+      )
+    ) {
+      return "Payment could not be completed with this payment method. Please use another card.";
+    }
+
+    if (
+      normalized.includes(
+        "cancel"
+      )
+    ) {
+      return "Payment was cancelled. No Novux were added.";
+    }
+
+    const firstUsefulText =
+      texts.find(
+        (item) =>
+          item.trim()
+            .length > 0
+      );
+
     return (
-      rawMessage ||
+      firstUsefulText ||
       fallback
     );
   }
 
-  /*
-  =========================================================
-  CAPTURE PAYPAL ORDER
-  =========================================================
-  */
+  /* =========================================================
+     CAPTURE PAYPAL ORDER
+  ========================================================= */
 
   async function capturePayPalOrder(
     orderID: string
   ) {
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
+      data: {
+        session,
+      },
+    } =
+      await supabase.auth.getSession();
 
-    if (!session?.access_token) {
+    if (
+      !session?.access_token
+    ) {
       throw new Error(
         "Your login session expired. Please log in again."
       );
@@ -701,19 +1323,24 @@ export default function HomePage() {
       await fetch(
         "/api/paypal/create-order/capture-order",
         {
-          method: "POST",
+          method:
+            "POST",
 
           headers: {
             "Content-Type":
+              "application/json",
+
+            Accept:
               "application/json",
 
             Authorization:
               `Bearer ${session.access_token}`,
           },
 
-          body: JSON.stringify({
-            orderID,
-          }),
+          body:
+            JSON.stringify({
+              orderID,
+            }),
         }
       );
 
@@ -727,13 +1354,6 @@ export default function HomePage() {
       data
     );
 
-    /*
-    =======================================================
-    IMPORTANT:
-    PayPal successful capture must be COMPLETED.
-    =======================================================
-    */
-
     const captureStatus =
       data?.captureStatus ||
       data?.capture?.status ||
@@ -741,13 +1361,21 @@ export default function HomePage() {
       data?.status;
 
     if (
-      captureStatus &&
-      captureStatus !== "COMPLETED"
+      !captureStatus
+    ) {
+      throw new Error(
+        "Payment could not be verified. No Novux were added."
+      );
+    }
+
+    if (
+      captureStatus !==
+      "COMPLETED"
     ) {
       throw new Error(
         getPaymentErrorMessage(
           data,
-          `Payment was not completed. PayPal status: ${captureStatus}.`
+          `Payment was not completed. PayPal status: ${captureStatus}. No Novux were added.`
         )
       );
     }
@@ -759,70 +1387,114 @@ export default function HomePage() {
       throw new Error(
         getPaymentErrorMessage(
           data,
-          "Payment could not be completed."
+          "Payment could not be completed. No Novux were added."
         )
-      );
-    }
-
-    /*
-    =======================================================
-    Do not trust a successful flag without a capture status.
-    The secure server route should return COMPLETED.
-    =======================================================
-    */
-
-    if (!captureStatus) {
-      console.warn(
-        "capture-order did not return captureStatus. Server route should return the PayPal capture status."
       );
     }
 
     return data;
   }
 
-  /*
-  =========================================================
-  CREATE PAYPAL SDK INSTANCE
-  =========================================================
-  */
+  /* =========================================================
+     CREATE PAYPAL SDK INSTANCE
+     
+     IMPORTANT:
+     - NO /api/paypal/create-order/client-token
+     - NO client token
+     - Uses public Live Client ID directly
+     - This is the current PayPal v6 clientId flow
+  ========================================================= */
 
   async function createPayPalInstance(
     components: string[]
   ) {
+    const sdkAvailable =
+      await waitForPayPalSDK();
+
     if (
-      !paypalReady ||
+      !sdkAvailable ||
       !window.paypal
     ) {
       throw new Error(
-        "PayPal is still loading. Please wait a moment."
+        "PayPal is still loading. Please wait a moment and try again."
       );
     }
 
-    const clientToken =
-      await getPayPalClientToken();
+    console.log(
+      "Creating PayPal SDK instance with DIRECT CLIENT ID..."
+    );
 
     console.log(
-      "Creating PayPal SDK instance with components:",
+      "PayPal build marker:",
+      PAYPAL_BUILD_MARKER
+    );
+
+    console.log(
+      "PayPal requested components:",
       components
     );
+
+    /*
+    =======================================================
+    GET PUBLIC LIVE CLIENT ID
+    =======================================================
+    */
+
+    const clientId =
+      process.env
+        .NEXT_PUBLIC_PAYPAL_CLIENT_ID
+        ?.trim();
+
+    if (!clientId) {
+      console.error(
+        "NEXT_PUBLIC_PAYPAL_CLIENT_ID is missing."
+      );
+
+      throw new Error(
+        "PayPal Live Client ID is missing. Add NEXT_PUBLIC_PAYPAL_CLIENT_ID in Vercel."
+      );
+    }
+
+    console.log(
+      "PayPal Live Client ID found."
+    );
+
+    /*
+    =======================================================
+    INITIALIZE PAYPAL V6
+    =======================================================
+    */
 
     const paypalInstance =
       await window.paypal.createInstance(
         {
-          clientToken,
+          clientId,
+
           components,
-          pageType: "checkout",
+
+          pageType:
+            "checkout",
         }
       );
+
+    if (
+      !paypalInstance
+    ) {
+      throw new Error(
+        "PayPal SDK could not create a payment instance."
+      );
+    }
+
+    console.log(
+      "PayPal Production SDK instance created successfully."
+    );
 
     return paypalInstance;
   }
 
-  /*
-  =========================================================
-  START PAYPAL PAYMENT
-  =========================================================
-  */
+  /* =========================================================
+     START PAYPAL PAYMENT
+  ========================================================= */
 
   async function startPayPalPayment(
     pkg: NovuxPackageData
@@ -835,8 +1507,11 @@ export default function HomePage() {
       return;
     }
 
+    const sdkAvailable =
+      await waitForPayPalSDK();
+
     if (
-      !paypalReady ||
+      !sdkAvailable ||
       !window.paypal
     ) {
       setPaymentMessage(
@@ -846,127 +1521,177 @@ export default function HomePage() {
       return;
     }
 
-    setPaymentLoading(true);
+    setPaymentLoading(
+      true
+    );
+
     setPaymentMessage("");
 
     try {
       const paypalInstance =
-        await createPayPalInstance([
-          "paypal-payments",
-        ]);
+        await createPayPalInstance(
+          [
+            "paypal-payments",
+          ]
+        );
 
       const paymentSession =
         paypalInstance.createPayPalOneTimePaymentSession(
           {
-            onApprove: async (
-              data: any
-            ) => {
-              try {
-                setPaymentMessage(
-                  "Payment approved. Completing your purchase..."
-                );
-
-                const result =
-                  await capturePayPalOrder(
-                    data.orderId
+            onApprove:
+              async (
+                data: any
+              ) => {
+                try {
+                  setPaymentMessage(
+                    "Payment approved. Completing your purchase..."
                   );
 
-                /*
-                =================================================
-                SUCCESS ONLY
-                =================================================
-                */
+                  const orderId =
+                    data?.orderId ||
+                    data?.orderID;
 
-                const status =
-                  result?.captureStatus ||
-                  result?.capture?.status ||
-                  result?.paypalStatus ||
-                  result?.status;
+                  if (
+                    !orderId
+                  ) {
+                    throw new Error(
+                      "PayPal did not return an order ID. No Novux were added."
+                    );
+                  }
 
-                if (
-                  status &&
-                  status !== "COMPLETED"
-                ) {
-                  throw new Error(
-                    getPaymentErrorMessage(
-                      result,
-                      "Payment was not completed."
-                    )
+                  const result =
+                    await capturePayPalOrder(
+                      orderId
+                    );
+
+                  const status =
+                    result?.captureStatus ||
+                    result?.capture?.status ||
+                    result?.paypalStatus ||
+                    result?.status;
+
+                  if (
+                    !status ||
+                    status !==
+                      "COMPLETED"
+                  ) {
+                    throw new Error(
+                      getPaymentErrorMessage(
+                        result,
+                        "Payment was not completed. No Novux were added."
+                      )
+                    );
+                  }
+
+                  if (
+                    !result ||
+                    !result.success
+                  ) {
+                    throw new Error(
+                      getPaymentErrorMessage(
+                        result,
+                        "Payment could not be completed. No Novux were added."
+                      )
+                    );
+                  }
+
+                  setPaymentMessage(
+                    `✅ Payment completed! ${pkg.amount.toLocaleString()} Novux has been added to your balance.`
                   );
-                }
 
-                if (
-                  !result ||
-                  !result.success
-                ) {
-                  throw new Error(
-                    getPaymentErrorMessage(
-                      result,
-                      "Payment could not be completed."
-                    )
+                  await loadUser();
+
+                  setTimeout(
+                    () => {
+                      setSelectedPackage(
+                        null
+                      );
+
+                      setPaymentMessage(
+                        ""
+                      );
+
+                      paypalCardSessionRef.current =
+                        null;
+
+                      setCardFieldsReady(
+                        false
+                      );
+
+                      setBillingPostalCode(
+                        ""
+                      );
+
+                      setBillingCountryCode(
+                        "GE"
+                      );
+                    },
+                    2500
                   );
-                }
-
-                setPaymentMessage(
-                  `✅ Payment completed! ${pkg.amount.toLocaleString()} Novux has been added to your balance.`
-                );
-
-                /*
-                =================================================
-                REFRESH BALANCE IMMEDIATELY
-                =================================================
-                */
-
-                await loadUser();
-
-                setTimeout(() => {
-                  setSelectedPackage(null);
-
-                  setPaymentMessage("");
-
-                  paypalCardSessionRef.current =
-                    null;
-
-                  setCardFieldsReady(false);
-
-                  setBillingPostalCode("");
-
-                  setBillingCountryCode("GE");
-                }, 2500);
-              } catch (error) {
-                console.error(
-                  "Capture error:",
+                } catch (
                   error
-                );
+                ) {
+                  console.error(
+                    "Capture error:",
+                    error
+                  );
 
-                setPaymentMessage(
-                  error instanceof Error
-                    ? error.message
-                    : "Payment failed. No Novux was added."
-                );
-              } finally {
+                  setPaymentMessage(
+                    error instanceof
+                      Error
+                      ? error.message
+                      : "Payment failed. No Novux were added."
+                  );
+                } finally {
+                  setPaymentLoading(
+                    false
+                  );
+                }
+              },
+
+            onCancel:
+              () => {
                 setPaymentLoading(
                   false
                 );
-              }
-            },
 
-            onCancel: () => {
-              setPaymentLoading(
-                false
-              );
+                setPaymentMessage(
+                  "Payment cancelled. No Novux were added."
+                );
+              },
 
-              setPaymentMessage(
-                "Payment cancelled. No Novux was added."
-              );
-            },
+            onError:
+              (
+                error: any
+              ) => {
+                console.error(
+                  "PayPal payment session error:",
+                  error
+                );
+
+                setPaymentLoading(
+                  false
+                );
+
+                setPaymentMessage(
+                  getPaymentErrorMessage(
+                    error,
+                    "PayPal payment failed. No Novux were added."
+                  )
+                );
+              },
           }
         );
 
       const orderPromise =
-        createPayPalOrder(pkg).then(
-          (orderID) => ({
-            orderId: orderID,
+        createPayPalOrder(
+          pkg
+        ).then(
+          (
+            orderID
+          ) => ({
+            orderId:
+              orderID,
           })
         );
 
@@ -977,27 +1702,30 @@ export default function HomePage() {
         },
         orderPromise
       );
-    } catch (error) {
+    } catch (
+      error
+    ) {
       console.error(
         "PayPal payment error:",
         error
       );
 
-      setPaymentLoading(false);
+      setPaymentLoading(
+        false
+      );
 
       setPaymentMessage(
-        error instanceof Error
+        error instanceof
+          Error
           ? error.message
-          : "Payment failed. No Novux was added."
+          : "Payment failed. No Novux were added."
       );
     }
   }
 
-  /*
-  =========================================================
-  CARD FIELDS
-  =========================================================
-  */
+  /* =========================================================
+     CARD FIELDS
+  ========================================================= */
 
   async function setupCardFields(
     pkg: NovuxPackageData
@@ -1006,27 +1734,20 @@ export default function HomePage() {
       return;
     }
 
-    if (
-      !paypalReady ||
-      !window.paypal
-    ) {
-      setPaymentMessage(
-        "PayPal is still loading."
-      );
-
-      return;
-    }
-
-    setCardFieldsReady(false);
+    setCardFieldsReady(
+      false
+    );
 
     paypalCardSessionRef.current =
       null;
 
     try {
       const paypalInstance =
-        await createPayPalInstance([
-          "card-fields",
-        ]);
+        await createPayPalInstance(
+          [
+            "card-fields",
+          ]
+        );
 
       console.log(
         "Checking PayPal card eligibility..."
@@ -1035,7 +1756,8 @@ export default function HomePage() {
       const paymentMethods =
         await paypalInstance.findEligibleMethods(
           {
-            currencyCode: "USD",
+            currencyCode:
+              "USD",
           }
         );
 
@@ -1054,8 +1776,12 @@ export default function HomePage() {
         cardEligible
       );
 
-      if (!cardEligible) {
-        setCardFieldsReady(false);
+      if (
+        !cardEligible
+      ) {
+        setCardFieldsReady(
+          false
+        );
 
         setPaymentMessage(
           "Credit/debit card payments are not available for this PayPal account or region."
@@ -1066,6 +1792,14 @@ export default function HomePage() {
 
       const cardSession =
         paypalInstance.createCardFieldsOneTimePaymentSession();
+
+      if (
+        !cardSession
+      ) {
+        throw new Error(
+          "PayPal could not create the card payment session."
+        );
+      }
 
       paypalCardSessionRef.current =
         cardSession;
@@ -1093,25 +1827,44 @@ export default function HomePage() {
         paypalCardSessionRef.current =
           null;
 
-        setCardFieldsReady(false);
-
-        setPaymentMessage(
-          "Could not find the card fields."
+        setCardFieldsReady(
+          false
         );
 
-        return;
+        throw new Error(
+          "Could not find the card field containers."
+        );
       }
 
-      numberContainer.innerHTML = "";
-      expiryContainer.innerHTML = "";
-      cvvContainer.innerHTML = "";
+      numberContainer.innerHTML =
+        "";
+
+      expiryContainer.innerHTML =
+        "";
+
+      cvvContainer.innerHTML =
+        "";
 
       const numberField =
         cardSession.createCardFieldsComponent(
           {
             type: "number",
+
             placeholder:
               "Card number",
+
+            style: {
+              input: {
+                fontSize:
+                  "16px",
+
+                lineHeight:
+                  "24px",
+
+                color:
+                  "#111827",
+              },
+            },
           }
         );
 
@@ -1119,8 +1872,22 @@ export default function HomePage() {
         cardSession.createCardFieldsComponent(
           {
             type: "expiry",
+
             placeholder:
-              "MM / YY",
+              "MM/YY",
+
+            style: {
+              input: {
+                fontSize:
+                  "16px",
+
+                lineHeight:
+                  "24px",
+
+                color:
+                  "#111827",
+              },
+            },
           }
         );
 
@@ -1128,8 +1895,22 @@ export default function HomePage() {
         cardSession.createCardFieldsComponent(
           {
             type: "cvv",
+
             placeholder:
               "CVV",
+
+            style: {
+              input: {
+                fontSize:
+                  "16px",
+
+                lineHeight:
+                  "24px",
+
+                color:
+                  "#111827",
+              },
+            },
           }
         );
 
@@ -1145,51 +1926,19 @@ export default function HomePage() {
         cvvField
       );
 
-      /*
-      =====================================================
-      FORCE PAYPAL IFRAMES TO STAY SMALL
-      =====================================================
-      */
+      setCardFieldsReady(
+        true
+      );
 
-      const numberIframe =
-        numberContainer.querySelector(
-          "iframe"
-        );
-
-      const expiryIframe =
-        expiryContainer.querySelector(
-          "iframe"
-        );
-
-      const cvvIframe =
-        cvvContainer.querySelector(
-          "iframe"
-        );
-
-      [
-        numberIframe,
-        expiryIframe,
-        cvvIframe,
-      ].forEach((iframe) => {
-        if (
-          iframe instanceof
-          HTMLIFrameElement
-        ) {
-          iframe.style.width = "100%";
-          iframe.style.height = "44px";
-          iframe.style.minHeight = "44px";
-          iframe.style.maxHeight = "44px";
-          iframe.style.border = "0";
-          iframe.style.display = "block";
-        }
-      });
-
-      setCardFieldsReady(true);
+      setPaymentMessage("");
 
       console.log(
-        "PayPal Card Fields loaded successfully."
+        "PayPal Production Card Fields loaded successfully for:",
+        pkg
       );
-    } catch (error) {
+    } catch (
+      error
+    ) {
       console.error(
         "Card fields setup error:",
         error
@@ -1198,21 +1947,22 @@ export default function HomePage() {
       paypalCardSessionRef.current =
         null;
 
-      setCardFieldsReady(false);
+      setCardFieldsReady(
+        false
+      );
 
       setPaymentMessage(
-        error instanceof Error
+        error instanceof
+          Error
           ? error.message
           : "Could not load card payment."
       );
     }
   }
 
-  /*
-  =========================================================
-  PAY WITH CARD
-  =========================================================
-  */
+  /* =========================================================
+     PAY WITH CARD
+  ========================================================= */
 
   async function payWithCard(
     pkg: NovuxPackageData
@@ -1251,8 +2001,10 @@ export default function HomePage() {
     }
 
     if (
-      postalCode.length < 3 ||
-      postalCode.length > 12
+      postalCode.length <
+        3 ||
+      postalCode.length >
+        12
     ) {
       setPaymentMessage(
         "Please enter a valid billing postal code."
@@ -1267,7 +2019,8 @@ export default function HomePage() {
         .toUpperCase();
 
     if (
-      countryCode.length !== 2
+      countryCode.length !==
+      2
     ) {
       setPaymentMessage(
         "Please select a valid billing country."
@@ -1276,29 +2029,22 @@ export default function HomePage() {
       return;
     }
 
-    setPaymentLoading(true);
+    setPaymentLoading(
+      true
+    );
+
     setPaymentMessage("");
 
     try {
-      /*
-      =====================================================
-      1. CREATE ORDER
-      =====================================================
-      */
-
       const orderID =
-        await createPayPalOrder(pkg);
+        await createPayPalOrder(
+          pkg
+        );
 
       console.log(
         "Created PayPal card order:",
         orderID
       );
-
-      /*
-      =====================================================
-      2. SUBMIT CARD
-      =====================================================
-      */
 
       console.log(
         "Submitting PayPal Card Fields..."
@@ -1318,10 +2064,11 @@ export default function HomePage() {
         await cardSession.submit(
           orderID,
           {
-            billingAddress: {
-              postalCode,
-              countryCode,
-            },
+            billingAddress:
+              {
+                postalCode,
+                countryCode,
+              },
           }
         );
 
@@ -1339,7 +2086,10 @@ export default function HomePage() {
       );
 
       const finalOrderID =
-        result?.data?.orderId ||
+        result?.data
+          ?.orderId ||
+        result?.data
+          ?.orderID ||
         orderID;
 
       console.log(
@@ -1347,57 +2097,37 @@ export default function HomePage() {
         finalOrderID
       );
 
-      /*
-      =====================================================
-      CANCELLED
-      =====================================================
-      */
-
       if (
-        state === "canceled"
+        state ===
+        "canceled"
       ) {
         setPaymentMessage(
-          "Payment was cancelled. No Novux was added."
+          "Payment was cancelled. No Novux were added."
         );
 
         return;
       }
 
-      /*
-      =====================================================
-      FAILED
-      =====================================================
-      */
-
       if (
-        state === "failed"
+        state ===
+        "failed"
       ) {
         console.error(
           "PayPal Card Fields payment failed:",
           result
         );
 
-        console.error(
-          "PayPal Card Fields failure data:",
-          result?.data
-        );
-
         throw new Error(
           getPaymentErrorMessage(
             result,
-            "Card payment failed. No Novux was added."
+            "Card payment failed. No Novux were added."
           )
         );
       }
 
-      /*
-      =====================================================
-      UNKNOWN
-      =====================================================
-      */
-
       if (
-        state !== "succeeded"
+        state !==
+        "succeeded"
       ) {
         console.error(
           "Unexpected PayPal Card Fields result:",
@@ -1405,15 +2135,9 @@ export default function HomePage() {
         );
 
         throw new Error(
-          "PayPal could not confirm your card payment. No Novux was added."
+          "PayPal could not confirm your card payment. No Novux were added."
         );
       }
-
-      /*
-      =====================================================
-      CARD SUBMISSION SUCCESSFUL
-      =====================================================
-      */
 
       console.log(
         "Card payment submission succeeded."
@@ -1423,12 +2147,6 @@ export default function HomePage() {
         "Now capturing order:",
         finalOrderID
       );
-
-      /*
-      =====================================================
-      CAPTURE
-      =====================================================
-      */
 
       const capture =
         await capturePayPalOrder(
@@ -1440,12 +2158,6 @@ export default function HomePage() {
         capture
       );
 
-      /*
-      =====================================================
-      VERIFY REAL CAPTURE STATUS
-      =====================================================
-      */
-
       const captureStatus =
         capture?.captureStatus ||
         capture?.capture?.status ||
@@ -1453,22 +2165,24 @@ export default function HomePage() {
         capture?.status;
 
       if (
-        captureStatus &&
-        captureStatus !== "COMPLETED"
+        !captureStatus
+      ) {
+        throw new Error(
+          "Payment could not be verified. No Novux were added."
+        );
+      }
+
+      if (
+        captureStatus !==
+        "COMPLETED"
       ) {
         throw new Error(
           getPaymentErrorMessage(
             capture,
-            `Payment was not completed. PayPal status: ${captureStatus}. No Novux was added.`
+            `Payment was not completed. PayPal status: ${captureStatus}. No Novux were added.`
           )
         );
       }
-
-      /*
-      =====================================================
-      FINAL SUCCESS CHECK
-      =====================================================
-      */
 
       if (
         !capture ||
@@ -1477,70 +2191,70 @@ export default function HomePage() {
         throw new Error(
           getPaymentErrorMessage(
             capture,
-            "Payment failed. No Novux was added."
+            "Payment failed. No Novux were added."
           )
         );
       }
-
-      /*
-      =====================================================
-      SUCCESS
-      =====================================================
-      */
 
       setPaymentMessage(
         `✅ Payment completed! ${pkg.amount.toLocaleString()} Novux has been added to your balance.`
       );
 
-      /*
-      =====================================================
-      REFRESH BALANCE IMMEDIATELY
-      =====================================================
-      */
-
       await loadUser();
 
-      /*
-      =====================================================
-      CLOSE
-      =====================================================
-      */
+      setTimeout(
+        () => {
+          setSelectedPackage(
+            null
+          );
 
-      setTimeout(() => {
-        setSelectedPackage(null);
+          setPaymentMessage(
+            ""
+          );
 
-        setPaymentMessage("");
+          paypalCardSessionRef.current =
+            null;
 
-        paypalCardSessionRef.current =
-          null;
+          setCardFieldsReady(
+            false
+          );
 
-        setCardFieldsReady(false);
+          setBillingPostalCode(
+            ""
+          );
 
-        setBillingPostalCode("");
-
-        setBillingCountryCode("GE");
-      }, 2500);
-    } catch (error) {
+          setBillingCountryCode(
+            "GE"
+          );
+        },
+        2500
+      );
+    } catch (
+      error
+    ) {
       console.error(
         "Card payment error:",
         error
       );
 
       let errorMessage =
-        "Card payment failed. No Novux was added.";
+        "Card payment failed. No Novux were added.";
 
       if (
-        error instanceof Error
+        error instanceof
+        Error
       ) {
         errorMessage =
           error.message;
       } else {
         try {
           errorMessage =
-            JSON.stringify(error);
+            JSON.stringify(
+              error
+            );
         } catch {
           errorMessage =
-            "Card payment failed. No Novux was added.";
+            "Card payment failed. No Novux were added.";
         }
       }
 
@@ -1553,99 +2267,127 @@ export default function HomePage() {
         errorMessage
       );
     } finally {
-      setPaymentLoading(false);
+      setPaymentLoading(
+        false
+      );
     }
   }
 
-  /*
-  =========================================================
-  OPEN PACKAGE
-  =========================================================
-  */
+  /* =========================================================
+     OPEN PACKAGE
+  ========================================================= */
 
   function openPackage(
     amount: number,
     price: number
   ) {
-    const pkg: NovuxPackageData = {
+    const pkg:
+      NovuxPackageData = {
       amount,
       price,
-      label: `${amount.toLocaleString()} Novux`,
+      label:
+        `${amount.toLocaleString()} Novux`,
     };
 
-    setShowNovuxShop(false);
+    setShowNovuxShop(
+      false
+    );
 
-    setSelectedPackage(pkg);
+    setSelectedPackage(
+      pkg
+    );
 
-    setPaymentMessage("");
+    setPaymentMessage(
+      ""
+    );
 
-    setBillingPostalCode("");
+    setBillingPostalCode(
+      ""
+    );
 
-    setBillingCountryCode("GE");
+    setBillingCountryCode(
+      "GE"
+    );
 
     paypalCardSessionRef.current =
       null;
 
-    setCardFieldsReady(false);
+    setCardFieldsReady(
+      false
+    );
 
-    setTimeout(() => {
-      setupCardFields(pkg);
-    }, 700);
+    window.setTimeout(
+      () => {
+        void setupCardFields(
+          pkg
+        );
+      },
+      500
+    );
   }
 
-  /*
-  =========================================================
-  CLOSE PAYMENT MODAL
-  =========================================================
-  */
+  /* =========================================================
+     CLOSE PAYMENT MODAL
+  ========================================================= */
 
   function closePaymentModal() {
-    if (paymentLoading) {
+    if (
+      paymentLoading
+    ) {
       return;
     }
 
-    setSelectedPackage(null);
+    setSelectedPackage(
+      null
+    );
 
     paypalCardSessionRef.current =
       null;
 
-    setCardFieldsReady(false);
+    setCardFieldsReady(
+      false
+    );
 
     setPaymentMessage("");
 
-    setBillingPostalCode("");
+    setBillingPostalCode(
+      ""
+    );
 
-    setBillingCountryCode("GE");
+    setBillingCountryCode(
+      "GE"
+    );
   }
 
-  /*
-  =========================================================
-  LOGOUT
-  =========================================================
-  */
+  /* =========================================================
+     LOGOUT
+  ========================================================= */
 
   async function logout() {
     await supabase.auth.signOut();
-    router.push("/login");
+
+    router.push(
+      "/login"
+    );
   }
 
   const avatarLetter =
     profile?.username
       ?.charAt(0)
-      ?.toUpperCase() || "N";
+      ?.toUpperCase() ||
+    "N";
 
   return (
     <main className="min-h-screen bg-[#f3f3f3] text-[#191919]">
 
-      {/* =====================================================
-          TOP NAVBAR
-      ===================================================== */}
-
       <header className="sticky top-0 z-50 h-16 border-b border-gray-200 bg-white">
+
         <div className="flex h-full items-center px-4">
 
           <button
-            onClick={() => router.push("/")}
+            onClick={() =>
+              router.push("/")
+            }
             className="mr-8 text-3xl font-black tracking-tight"
           >
             <span className="text-black">
@@ -1666,7 +2408,9 @@ export default function HomePage() {
             <input
               value={search}
               onChange={(e) =>
-                setSearch(e.target.value)
+                setSearch(
+                  e.target.value
+                )
               }
               placeholder="Search games, players, creators..."
               className="h-10 w-full rounded-xl border border-gray-200 bg-gray-100 pl-11 pr-4 text-sm outline-none transition focus:border-blue-500 focus:bg-white"
@@ -1679,19 +2423,25 @@ export default function HomePage() {
             {profile && (
               <button
                 onClick={() =>
-                  setShowNovuxShop(true)
+                  setShowNovuxShop(
+                    true
+                  )
                 }
                 className="hidden rounded-xl bg-blue-50 px-4 py-2 text-sm font-black text-blue-600 transition hover:bg-blue-100 md:block"
               >
                 💎{" "}
-                {profile.novux_balance.toLocaleString()}{" "}
+                {
+                  profile.novux_balance.toLocaleString()
+                }{" "}
                 Novux
               </button>
             )}
 
             <button
               onClick={() =>
-                router.push("/profile")
+                router.push(
+                  "/profile"
+                )
               }
               className="hidden rounded-lg px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-100 md:block"
             >
@@ -1700,7 +2450,9 @@ export default function HomePage() {
 
             <button
               onClick={() =>
-                router.push("/friends")
+                router.push(
+                  "/friends"
+                )
               }
               className="hidden rounded-lg px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-100 md:block"
             >
@@ -1710,39 +2462,45 @@ export default function HomePage() {
             {profile && (
               <button
                 onClick={() =>
-                  router.push("/profile")
+                  router.push(
+                    "/profile"
+                  )
                 }
                 className="ml-2 flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-gray-100"
               >
                 {profile.avatar_url ? (
                   <img
-                    src={profile.avatar_url}
-                    alt={profile.username}
+                    src={
+                      profile.avatar_url
+                    }
+                    alt={
+                      profile.username
+                    }
                     className="h-9 w-9 rounded-full object-cover"
                   />
                 ) : (
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-sm font-black text-white">
-                    {avatarLetter}
+                    {
+                      avatarLetter
+                    }
                   </div>
                 )}
 
                 <span className="hidden max-w-[150px] truncate text-sm font-bold sm:block">
-                  {profile.username}
+                  {
+                    profile.username
+                  }
                 </span>
               </button>
             )}
 
           </div>
+
         </div>
+
       </header>
 
-      {/* =====================================================
-          LAYOUT
-      ===================================================== */}
-
       <div className="mx-auto flex max-w-[1500px]">
-
-        {/* SIDEBAR */}
 
         <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 shrink-0 border-r border-gray-200 bg-white p-4 lg:block">
 
@@ -1753,7 +2511,9 @@ export default function HomePage() {
               text="Home"
               active
               onClick={() =>
-                router.push("/")
+                router.push(
+                  "/"
+                )
               }
             />
 
@@ -1761,7 +2521,9 @@ export default function HomePage() {
               icon="🔎"
               text="Discover"
               onClick={() =>
-                router.push("/discover")
+                router.push(
+                  "/discover"
+                )
               }
             />
 
@@ -1769,7 +2531,9 @@ export default function HomePage() {
               icon="🎮"
               text="Games"
               onClick={() =>
-                router.push("/games")
+                router.push(
+                  "/games"
+                )
               }
             />
 
@@ -1777,7 +2541,9 @@ export default function HomePage() {
               icon="⭐"
               text="Favorites"
               onClick={() =>
-                router.push("/favorites")
+                router.push(
+                  "/favorites"
+                )
               }
             />
 
@@ -1785,7 +2551,9 @@ export default function HomePage() {
               icon="⚡"
               text="Upgrader"
               onClick={() =>
-                router.push("/upgrader")
+                router.push(
+                  "/upgrader"
+                )
               }
             />
 
@@ -1793,7 +2561,9 @@ export default function HomePage() {
               icon="👥"
               text="Friends"
               onClick={() =>
-                router.push("/friends")
+                router.push(
+                  "/friends"
+                )
               }
             />
 
@@ -1801,7 +2571,9 @@ export default function HomePage() {
               icon="💬"
               text="Chat"
               onClick={() =>
-                router.push("/chat")
+                router.push(
+                  "/chat"
+                )
               }
             />
 
@@ -1819,7 +2591,9 @@ export default function HomePage() {
               icon="👤"
               text="My Profile"
               onClick={() =>
-                router.push("/profile")
+                router.push(
+                  "/profile"
+                )
               }
             />
 
@@ -1827,7 +2601,9 @@ export default function HomePage() {
               icon="🎨"
               text="Avatar"
               onClick={() =>
-                router.push("/avatar")
+                router.push(
+                  "/avatar"
+                )
               }
             />
 
@@ -1835,7 +2611,9 @@ export default function HomePage() {
               icon="⚙️"
               text="Settings"
               onClick={() =>
-                router.push("/settings")
+                router.push(
+                  "/settings"
+                )
               }
             />
 
@@ -1844,10 +2622,15 @@ export default function HomePage() {
           <div className="absolute bottom-5 left-4 right-4">
 
             <button
-              onClick={logout}
+              onClick={
+                logout
+              }
               className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-gray-500 transition hover:bg-red-50 hover:text-red-600"
             >
-              <span>↪</span>
+              <span>
+                ↪
+              </span>
+
               Logout
             </button>
 
@@ -1855,11 +2638,7 @@ export default function HomePage() {
 
         </aside>
 
-        {/* MAIN CONTENT */}
-
         <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
-
-          {/* MOBILE SEARCH */}
 
           <div className="mb-6 md:hidden">
 
@@ -1872,7 +2651,9 @@ export default function HomePage() {
               <input
                 value={search}
                 onChange={(e) =>
-                  setSearch(e.target.value)
+                  setSearch(
+                    e.target.value
+                  )
                 }
                 placeholder="Search games..."
                 className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-11 pr-4 text-sm outline-none"
@@ -1881,8 +2662,6 @@ export default function HomePage() {
             </div>
 
           </div>
-
-          {/* WELCOME */}
 
           {profile && (
             <section className="mb-8">
@@ -1893,13 +2672,19 @@ export default function HomePage() {
 
                   {profile.avatar_url ? (
                     <img
-                      src={profile.avatar_url}
-                      alt={profile.username}
+                      src={
+                        profile.avatar_url
+                      }
+                      alt={
+                        profile.username
+                      }
                       className="h-20 w-20 rounded-2xl object-cover shadow-sm"
                     />
                   ) : (
                     <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 text-3xl font-black text-white shadow-sm">
-                      {avatarLetter}
+                      {
+                        avatarLetter
+                      }
                     </div>
                   )}
 
@@ -1910,14 +2695,19 @@ export default function HomePage() {
                     </p>
 
                     <h1 className="mt-1 text-3xl font-black">
-                      {profile.display_name ||
-                        profile.username}
+                      {
+                        profile.display_name ||
+                        profile.username
+                      }
                     </h1>
 
                     <div className="mt-1 flex items-center gap-2">
 
                       <p className="text-sm text-gray-500">
-                        @{profile.username}
+                        @
+                        {
+                          profile.username
+                        }
                       </p>
 
                       <button
@@ -1926,7 +2716,9 @@ export default function HomePage() {
                             profile.username
                           );
 
-                          setUsernameMessage("");
+                          setUsernameMessage(
+                            ""
+                          );
 
                           setShowUsernameEditor(
                             true
@@ -1943,7 +2735,9 @@ export default function HomePage() {
 
                       <div className="rounded-xl bg-blue-50 px-4 py-2 text-sm font-black text-blue-600">
                         💎{" "}
-                        {profile.novux_balance.toLocaleString()}{" "}
+                        {
+                          profile.novux_balance.toLocaleString()
+                        }{" "}
                         Novux
                       </div>
 
@@ -1955,7 +2749,9 @@ export default function HomePage() {
 
                     <button
                       onClick={() =>
-                        router.push("/profile")
+                        router.push(
+                          "/profile"
+                        )
                       }
                       className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white hover:bg-blue-700"
                     >
@@ -1964,7 +2760,9 @@ export default function HomePage() {
 
                     <button
                       onClick={() =>
-                        router.push("/friends")
+                        router.push(
+                          "/friends"
+                        )
                       }
                       className="rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-bold text-gray-700 hover:bg-gray-100"
                     >
@@ -1973,7 +2771,9 @@ export default function HomePage() {
 
                     <button
                       onClick={() =>
-                        router.push("/upgrader")
+                        router.push(
+                          "/upgrader"
+                        )
                       }
                       className="rounded-xl bg-gray-900 px-5 py-3 text-sm font-bold text-white hover:bg-black"
                     >
@@ -1989,29 +2789,33 @@ export default function HomePage() {
             </section>
           )}
 
-          {/* NOVA STATS */}
-
           <section className="mb-8">
 
             <div className="grid gap-4 sm:grid-cols-3">
 
               <StatCard
                 icon="🟢"
-                value={onlineCount}
+                value={
+                  onlineCount
+                }
                 title="Online Now"
                 bg="bg-green-50"
               />
 
               <StatCard
                 icon="👁️"
-                value={visitedCount}
+                value={
+                  visitedCount
+                }
                 title="Players Visited"
                 bg="bg-blue-50"
               />
 
               <StatCard
                 icon="👤"
-                value={registeredCount}
+                value={
+                  registeredCount
+                }
                 title="Registered"
                 bg="bg-purple-50"
               />
@@ -2019,8 +2823,6 @@ export default function HomePage() {
             </div>
 
           </section>
-
-          {/* NOVA UPGRADER */}
 
           <section className="mb-12">
 
@@ -2082,7 +2884,9 @@ export default function HomePage() {
                         </p>
 
                         <p className="text-lg font-black text-white">
-                          {profile.novux_balance.toLocaleString()}{" "}
+                          {
+                            profile.novux_balance.toLocaleString()
+                          }{" "}
                           Novux
                         </p>
 
@@ -2097,7 +2901,9 @@ export default function HomePage() {
 
                   <button
                     onClick={() =>
-                      router.push("/upgrader")
+                      router.push(
+                        "/upgrader"
+                      )
                     }
                     className="group w-full rounded-2xl bg-blue-600 px-8 py-5 text-sm font-black text-white shadow-xl shadow-blue-900/30 transition hover:scale-105 hover:bg-blue-500 lg:w-auto"
                   >
@@ -2168,8 +2974,6 @@ export default function HomePage() {
 
           </section>
 
-          {/* CONTINUE PLAYING */}
-
           <GameSection
             title="Continue Playing"
             subtitle="Jump back into your recent games."
@@ -2180,7 +2984,9 @@ export default function HomePage() {
               players="Start playing"
               icon="🎮"
               onClick={() =>
-                router.push("/games")
+                router.push(
+                  "/games"
+                )
               }
             />
 
@@ -2189,7 +2995,9 @@ export default function HomePage() {
               players="Explore Nova"
               icon="🌎"
               onClick={() =>
-                router.push("/discover")
+                router.push(
+                  "/discover"
+                )
               }
             />
 
@@ -2198,7 +3006,9 @@ export default function HomePage() {
               players="Build a game"
               icon="🛠️"
               onClick={() =>
-                router.push("/create")
+                router.push(
+                  "/create"
+                )
               }
             />
 
@@ -2207,13 +3017,13 @@ export default function HomePage() {
               players="Find friends"
               icon="👥"
               onClick={() =>
-                router.push("/friends")
+                router.push(
+                  "/friends"
+                )
               }
             />
 
           </GameSection>
-
-          {/* POPULAR */}
 
           <GameSection
             title="Popular on Nova"
@@ -2225,7 +3035,9 @@ export default function HomePage() {
               players="1.2K players"
               icon="🏔️"
               onClick={() =>
-                router.push("/games")
+                router.push(
+                  "/games"
+                )
               }
             />
 
@@ -2234,7 +3046,9 @@ export default function HomePage() {
               players="842 players"
               icon="🏙️"
               onClick={() =>
-                router.push("/games")
+                router.push(
+                  "/games"
+                )
               }
             />
 
@@ -2243,7 +3057,9 @@ export default function HomePage() {
               players="726 players"
               icon="🏎️"
               onClick={() =>
-                router.push("/games")
+                router.push(
+                  "/games"
+                )
               }
             />
 
@@ -2252,13 +3068,13 @@ export default function HomePage() {
               players="531 players"
               icon="🏝️"
               onClick={() =>
-                router.push("/games")
+                router.push(
+                  "/games"
+                )
               }
             />
 
           </GameSection>
-
-          {/* CATEGORIES */}
 
           <section className="mt-12">
 
@@ -2280,7 +3096,9 @@ export default function HomePage() {
                 icon="⚔️"
                 title="Adventure"
                 onClick={() =>
-                  router.push("/games")
+                  router.push(
+                    "/games"
+                  )
                 }
               />
 
@@ -2288,7 +3106,9 @@ export default function HomePage() {
                 icon="🏎️"
                 title="Racing"
                 onClick={() =>
-                  router.push("/games")
+                  router.push(
+                    "/games"
+                  )
                 }
               />
 
@@ -2296,7 +3116,9 @@ export default function HomePage() {
                 icon="🏙️"
                 title="Roleplay"
                 onClick={() =>
-                  router.push("/games")
+                  router.push(
+                    "/games"
+                  )
                 }
               />
 
@@ -2304,15 +3126,15 @@ export default function HomePage() {
                 icon="🏗️"
                 title="Tycoon"
                 onClick={() =>
-                  router.push("/games")
+                  router.push(
+                    "/games"
+                  )
                 }
               />
 
             </div>
 
           </section>
-
-          {/* CREATE */}
 
           <section className="mt-12 mb-10">
 
@@ -2339,7 +3161,9 @@ export default function HomePage() {
 
                 <button
                   onClick={() =>
-                    router.push("/create")
+                    router.push(
+                      "/create"
+                    )
                   }
                   className="shrink-0 rounded-xl bg-white px-6 py-3 text-sm font-black text-black hover:bg-gray-100"
                 >
@@ -2353,6 +3177,7 @@ export default function HomePage() {
           </section>
 
         </main>
+
       </div>
 
       {/* =========================================================
@@ -2363,7 +3188,9 @@ export default function HomePage() {
         <div
           className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
           onClick={() =>
-            setShowNovuxShop(false)
+            setShowNovuxShop(
+              false
+            )
           }
         >
 
@@ -2396,7 +3223,9 @@ export default function HomePage() {
 
                 <button
                   onClick={() =>
-                    setShowNovuxShop(false)
+                    setShowNovuxShop(
+                      false
+                    )
                   }
                   className="rounded-xl px-3 py-2 text-xl text-white/70 transition hover:bg-white/10 hover:text-white"
                 >
@@ -2418,7 +3247,9 @@ export default function HomePage() {
                   </p>
 
                   <p className="text-xl font-black">
-                    {profile?.novux_balance.toLocaleString()}{" "}
+                    {
+                      profile?.novux_balance.toLocaleString()
+                    }{" "}
                     Novux
                   </p>
 
@@ -2538,7 +3369,9 @@ export default function HomePage() {
         <div
           className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-3 backdrop-blur-sm sm:p-4"
           onClick={() => {
-            if (!paymentLoading) {
+            if (
+              !paymentLoading
+            ) {
               closePaymentModal();
             }
           }}
@@ -2563,15 +3396,19 @@ export default function HomePage() {
 
                   <h2 className="text-xl font-black sm:text-2xl">
                     Buy{" "}
-                    {selectedPackage.amount.toLocaleString()}{" "}
+                    {
+                      selectedPackage.amount.toLocaleString()
+                    }{" "}
                     Novux
                   </h2>
 
                   <p className="mt-1 text-sm text-blue-100">
                     Total: $
-                    {selectedPackage.price.toFixed(
-                      2
-                    )}{" "}
+                    {
+                      selectedPackage.price.toFixed(
+                        2
+                      )
+                    }{" "}
                     USD
                   </p>
 
@@ -2579,8 +3416,12 @@ export default function HomePage() {
 
                 <button
                   type="button"
-                  disabled={paymentLoading}
-                  onClick={closePaymentModal}
+                  disabled={
+                    paymentLoading
+                  }
+                  onClick={
+                    closePaymentModal
+                  }
                   className="shrink-0 rounded-xl px-3 py-2 text-xl text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   ✕
@@ -2593,8 +3434,6 @@ export default function HomePage() {
             <div className="min-h-0 flex-1 overflow-y-auto">
 
               <div className="p-5 sm:p-6">
-
-                {/* PAYPAL */}
 
                 <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
 
@@ -2640,8 +3479,6 @@ export default function HomePage() {
 
                 </div>
 
-                {/* DIVIDER */}
-
                 <div className="my-4 flex items-center gap-3 sm:my-5">
 
                   <div className="h-px flex-1 bg-gray-200" />
@@ -2654,8 +3491,6 @@ export default function HomePage() {
 
                 </div>
 
-                {/* CARD */}
-
                 <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
 
                   <p className="text-sm font-black text-gray-900">
@@ -2665,8 +3500,6 @@ export default function HomePage() {
                   <p className="mt-1 text-xs leading-5 text-gray-500">
                     Your card details are securely handled by PayPal.
                   </p>
-
-                  {/* CARD NUMBER */}
 
                   <div className="mt-4">
 
@@ -2680,8 +3513,6 @@ export default function HomePage() {
                     />
 
                   </div>
-
-                  {/* EXPIRY + CVV */}
 
                   <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4">
 
@@ -2713,8 +3544,6 @@ export default function HomePage() {
 
                   </div>
 
-                  {/* COUNTRY */}
-
                   <div className="mt-4">
 
                     <label className="mb-2 block text-xs font-bold text-gray-600">
@@ -2735,9 +3564,10 @@ export default function HomePage() {
                       }
                       className="h-12 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
                     >
-
                       {COUNTRY_OPTIONS.map(
-                        (country) => (
+                        (
+                          country
+                        ) => (
                           <option
                             key={
                               country.code
@@ -2746,16 +3576,15 @@ export default function HomePage() {
                               country.code
                             }
                           >
-                            {country.name}
+                            {
+                              country.name
+                            }
                           </option>
                         )
                       )}
-
                     </select>
 
                   </div>
-
-                  {/* POSTAL CODE */}
 
                   <div className="mt-4">
 
@@ -2790,8 +3619,6 @@ export default function HomePage() {
 
                 </div>
 
-                {/* PAYMENT MESSAGE */}
-
                 {paymentMessage && (
                   <div
                     className={`mt-4 break-words rounded-xl p-4 text-sm font-semibold ${
@@ -2802,7 +3629,9 @@ export default function HomePage() {
                         : "bg-red-50 text-red-600"
                     }`}
                   >
-                    {paymentMessage}
+                    {
+                      paymentMessage
+                    }
                   </div>
                 )}
 
@@ -2811,8 +3640,6 @@ export default function HomePage() {
               </div>
 
             </div>
-
-            {/* FOOTER */}
 
             <div className="shrink-0 border-t border-gray-200 bg-white p-4 shadow-[0_-8px_20px_rgba(0,0,0,0.06)] sm:p-5">
 
@@ -2826,9 +3653,11 @@ export default function HomePage() {
 
                   <p className="text-lg font-black text-gray-900">
                     $
-                    {selectedPackage.price.toFixed(
-                      2
-                    )}
+                    {
+                      selectedPackage.price.toFixed(
+                        2
+                      )
+                    }
                   </p>
 
                 </div>
@@ -2841,7 +3670,9 @@ export default function HomePage() {
 
                   <p className="text-sm font-black text-blue-600">
                     💎{" "}
-                    {selectedPackage.amount.toLocaleString()}{" "}
+                    {
+                      selectedPackage.amount.toLocaleString()
+                    }{" "}
                     Novux
                   </p>
 
@@ -2856,7 +3687,8 @@ export default function HomePage() {
                   !paypalReady ||
                   !cardFieldsReady ||
                   !billingPostalCode.trim() ||
-                  billingCountryCode.length !== 2
+                  billingCountryCode.length !==
+                    2
                 }
                 onClick={() =>
                   payWithCard(
@@ -2897,10 +3729,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* =========================================================
-          CHANGE USERNAME MODAL
-      ========================================================= */}
-
       {showUsernameEditor && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
 
@@ -2931,7 +3759,9 @@ export default function HomePage() {
                     false
                   );
 
-                  setUsernameMessage("");
+                  setUsernameMessage(
+                    ""
+                  );
                 }}
                 className="rounded-xl px-3 py-2 text-xl text-gray-400 hover:bg-gray-100 hover:text-black"
               >
@@ -2965,13 +3795,17 @@ export default function HomePage() {
                 </span>
 
                 <input
-                  value={newUsername}
+                  value={
+                    newUsername
+                  }
                   onChange={(e) =>
                     setNewUsername(
                       e.target.value
                     )
                   }
-                  maxLength={20}
+                  maxLength={
+                    20
+                  }
                   placeholder="new.username"
                   className="h-12 w-full bg-transparent px-2 text-gray-900 outline-none"
                 />
@@ -2985,7 +3819,10 @@ export default function HomePage() {
                 </span>
 
                 <span>
-                  {newUsername.length}/20
+                  {
+                    newUsername.length
+                  }
+                  /20
                 </span>
 
               </div>
@@ -3012,7 +3849,9 @@ export default function HomePage() {
 
                 <span className="ml-1 font-bold text-gray-700">
                   💎{" "}
-                  {profile?.novux_balance.toLocaleString()}{" "}
+                  {
+                    profile?.novux_balance.toLocaleString()
+                  }{" "}
                   Novux
                 </span>
 
@@ -3022,18 +3861,26 @@ export default function HomePage() {
 
             {usernameMessage && (
               <div className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-600">
-                {usernameMessage}
+                {
+                  usernameMessage
+                }
               </div>
             )}
 
             <button
-              onClick={changeUsername}
-              disabled={changingUsername}
+              onClick={
+                changeUsername
+              }
+              disabled={
+                changingUsername
+              }
               className="mt-5 w-full rounded-xl bg-blue-600 py-3.5 font-black text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {changingUsername
-                ? "Changing Username..."
-                : "💎 Change Username — 1,000 Novux"}
+              {
+                changingUsername
+                  ? "Changing Username..."
+                  : "💎 Change Username — 1,000 Novux"
+              }
             </button>
 
             <button
@@ -3042,7 +3889,9 @@ export default function HomePage() {
                   false
                 );
 
-                setUsernameMessage("");
+                setUsernameMessage(
+                  ""
+                );
               }}
               className="mt-3 w-full rounded-xl py-3 font-bold text-gray-500 hover:bg-gray-100"
             >
@@ -3087,7 +3936,9 @@ function StatCard({
         <div>
 
           <p className="text-2xl font-black text-gray-900">
-            {value.toLocaleString()}
+            {
+              value.toLocaleString()
+            }
           </p>
 
           <p className="text-sm font-semibold text-gray-400">
@@ -3126,11 +3977,13 @@ function SidebarItem({
           : "text-gray-600 hover:bg-gray-100 hover:text-black"
       }`}
     >
+
       <span className="w-6 text-center text-lg">
         {icon}
       </span>
 
       {text}
+
     </button>
   );
 }
@@ -3146,7 +3999,7 @@ function GameSection({
 }: {
   title: string;
   subtitle: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <section className="mb-12">
