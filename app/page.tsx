@@ -35,298 +35,59 @@ type NovuxPackageData = {
 const PAYPAL_SDK_URL =
   "https://www.paypal.com/web-sdk/v6/core";
 
-/*
-  This marker helps confirm that the live deployment
-  is running THIS version of page.tsx.
-*/
 const PAYPAL_BUILD_MARKER =
-  "NOVA_PAYPAL_DIRECT_CLIENT_ID_2026_10_09";
+  "NOVA_PAYPAL_STANDARD_CHECKOUT_2026_10_09";
 
 /* =========================================================
-   BILLING COUNTRY LIST
+   HOME PAGE
 ========================================================= */
-
-const COUNTRY_CODES = [
-  "AF",
-  "AX",
-  "AL",
-  "DZ",
-  "AS",
-  "AD",
-  "AO",
-  "AI",
-  "AQ",
-  "AG",
-  "AR",
-  "AM",
-  "AW",
-  "AU",
-  "AT",
-  "AZ",
-  "BS",
-  "BH",
-  "BD",
-  "BB",
-  "BY",
-  "BE",
-  "BZ",
-  "BJ",
-  "BM",
-  "BT",
-  "BO",
-  "BQ",
-  "BA",
-  "BW",
-  "BV",
-  "BR",
-  "IO",
-  "BN",
-  "BG",
-  "BF",
-  "BI",
-  "CV",
-  "KH",
-  "CM",
-  "CA",
-  "KY",
-  "CF",
-  "TD",
-  "CL",
-  "CN",
-  "CX",
-  "CC",
-  "CO",
-  "KM",
-  "CG",
-  "CD",
-  "CK",
-  "CR",
-  "CI",
-  "HR",
-  "CU",
-  "CW",
-  "CY",
-  "CZ",
-  "DK",
-  "DJ",
-  "DM",
-  "DO",
-  "EC",
-  "EG",
-  "SV",
-  "GQ",
-  "ER",
-  "EE",
-  "SZ",
-  "ET",
-  "FK",
-  "FO",
-  "FJ",
-  "FI",
-  "FR",
-  "GF",
-  "PF",
-  "TF",
-  "GA",
-  "GM",
-  "GE",
-  "DE",
-  "GH",
-  "GI",
-  "GR",
-  "GL",
-  "GD",
-  "GP",
-  "GU",
-  "GT",
-  "GG",
-  "GN",
-  "GW",
-  "GY",
-  "HT",
-  "HM",
-  "VA",
-  "HN",
-  "HK",
-  "HU",
-  "IS",
-  "IN",
-  "ID",
-  "IR",
-  "IQ",
-  "IE",
-  "IM",
-  "IL",
-  "IT",
-  "JM",
-  "JP",
-  "JE",
-  "JO",
-  "KZ",
-  "KE",
-  "KI",
-  "KP",
-  "KR",
-  "KW",
-  "KG",
-  "LA",
-  "LV",
-  "LB",
-  "LS",
-  "LR",
-  "LY",
-  "LI",
-  "LT",
-  "LU",
-  "MO",
-  "MG",
-  "MW",
-  "MY",
-  "MV",
-  "ML",
-  "MT",
-  "MH",
-  "MQ",
-  "MR",
-  "MU",
-  "YT",
-  "MX",
-  "FM",
-  "MD",
-  "MC",
-  "MN",
-  "ME",
-  "MS",
-  "MA",
-  "MZ",
-  "MM",
-  "NA",
-  "NR",
-  "NP",
-  "NL",
-  "NC",
-  "NZ",
-  "NI",
-  "NE",
-  "NG",
-  "NU",
-  "NF",
-  "MK",
-  "MP",
-  "NO",
-  "OM",
-  "PK",
-  "PW",
-  "PS",
-  "PA",
-  "PG",
-  "PY",
-  "PE",
-  "PH",
-  "PN",
-  "PL",
-  "PT",
-  "PR",
-  "QA",
-  "RE",
-  "RO",
-  "RU",
-  "RW",
-  "BL",
-  "SH",
-  "KN",
-  "LC",
-  "MF",
-  "PM",
-  "VC",
-  "WS",
-  "SM",
-  "ST",
-  "SA",
-  "SN",
-  "RS",
-  "SC",
-  "SL",
-  "SG",
-  "SX",
-  "SK",
-  "SI",
-  "SB",
-  "SO",
-  "ZA",
-  "GS",
-  "SS",
-  "ES",
-  "LK",
-  "SD",
-  "SR",
-  "SJ",
-  "SE",
-  "CH",
-  "SY",
-  "TW",
-  "TJ",
-  "TZ",
-  "TH",
-  "TL",
-  "TG",
-  "TK",
-  "TO",
-  "TT",
-  "TN",
-  "TR",
-  "TM",
-  "TC",
-  "TV",
-  "UG",
-  "UA",
-  "AE",
-  "GB",
-  "US",
-  "UM",
-  "UY",
-  "UZ",
-  "VU",
-  "VE",
-  "VN",
-  "VG",
-  "VI",
-  "WF",
-  "EH",
-  "YE",
-  "ZM",
-  "ZW",
-] as const;
-
-const COUNTRY_OPTIONS = COUNTRY_CODES
-  .map((code) => ({
-    code,
-    name:
-      new Intl.DisplayNames(["en"], {
-        type: "region",
-      }).of(code) || code,
-  }))
-  .sort((a, b) =>
-    a.name.localeCompare(b.name)
-  );
 
 export default function HomePage() {
   const router = useRouter();
 
+  /* =======================================================
+     PROFILE
+  ======================================================= */
+
   const [profile, setProfile] =
     useState<Profile | null>(null);
+
+  /* =======================================================
+     SEARCH
+  ======================================================= */
 
   const [search, setSearch] =
     useState("");
 
+  /* =======================================================
+     USERNAME
+  ======================================================= */
+
   const [showUsernameEditor, setShowUsernameEditor] =
     useState(false);
+
+  const [newUsername, setNewUsername] =
+    useState("");
+
+  const [changingUsername, setChangingUsername] =
+    useState(false);
+
+  const [usernameMessage, setUsernameMessage] =
+    useState("");
+
+  /* =======================================================
+     NOVUX SHOP
+  ======================================================= */
 
   const [showNovuxShop, setShowNovuxShop] =
     useState(false);
 
   const [selectedPackage, setSelectedPackage] =
     useState<NovuxPackageData | null>(null);
+
+  /* =======================================================
+     PAYPAL
+  ======================================================= */
 
   const [paypalReady, setPaypalReady] =
     useState(false);
@@ -337,32 +98,15 @@ export default function HomePage() {
   const [paymentMessage, setPaymentMessage] =
     useState("");
 
-  const [cardFieldsReady, setCardFieldsReady] =
-    useState(false);
-
-  const [billingPostalCode, setBillingPostalCode] =
-    useState("");
-
-  const [billingCountryCode, setBillingCountryCode] =
-    useState("GE");
-
-  const paypalCardSessionRef =
-    useRef<any>(null);
-
   const paypalScriptLoadedRef =
     useRef(false);
 
   const paypalLoadingPromiseRef =
     useRef<Promise<boolean> | null>(null);
 
-  const [newUsername, setNewUsername] =
-    useState("");
-
-  const [changingUsername, setChangingUsername] =
-    useState(false);
-
-  const [usernameMessage, setUsernameMessage] =
-    useState("");
+  /* =======================================================
+     STATS
+  ======================================================= */
 
   const [registeredCount, setRegisteredCount] =
     useState(0);
@@ -465,9 +209,7 @@ export default function HomePage() {
     paypalScriptLoadedRef.current = true;
 
     const script =
-      document.createElement(
-        "script"
-      );
+      document.createElement("script");
 
     script.src =
       PAYPAL_SDK_URL;
@@ -500,21 +242,20 @@ export default function HomePage() {
   ========================================================= */
 
   useEffect(() => {
-    loadUser();
-    registerVisitOnce();
-    updateOnlineStatus();
-    loadStats();
+    void loadUser();
+    void registerVisitOnce();
+    void updateOnlineStatus();
+    void loadStats();
 
     const interval =
       setInterval(() => {
-        updateOnlineStatus();
-        loadStats();
+        void updateOnlineStatus();
+        void loadStats();
       }, 30000);
 
-    return () =>
-      clearInterval(
-        interval
-      );
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   /* =========================================================
@@ -538,10 +279,7 @@ export default function HomePage() {
         .select(
           "username, display_name, avatar_url, novux_balance"
         )
-        .eq(
-          "id",
-          user.id
-        )
+        .eq("id", user.id)
         .maybeSingle();
 
     if (error) {
@@ -553,28 +291,29 @@ export default function HomePage() {
       return;
     }
 
-    if (data) {
-      setProfile({
-        username:
-          data.username ??
-          "",
-
-        display_name:
-          data.display_name ??
-          data.username ??
-          "",
-
-        avatar_url:
-          data.avatar_url ??
-          null,
-
-        novux_balance:
-          Number(
-            data.novux_balance ??
-              0
-          ),
-      });
+    if (!data) {
+      return;
     }
+
+    setProfile({
+      username:
+        data.username ?? "",
+
+      display_name:
+        data.display_name ??
+        data.username ??
+        "",
+
+      avatar_url:
+        data.avatar_url ??
+        null,
+
+      novux_balance:
+        Number(
+          data.novux_balance ??
+            0
+        ),
+    });
   }
 
   /* =========================================================
@@ -610,16 +349,14 @@ export default function HomePage() {
 
     const {
       count,
-      error:
-        registeredError,
+      error: registeredError,
     } =
       await supabase
         .from("profiles")
         .select(
           "*",
           {
-            count:
-              "exact",
+            count: "exact",
             head: true,
           }
         );
@@ -803,17 +540,16 @@ export default function HomePage() {
         false
       );
 
+      const errorText =
+        error.message.toLowerCase();
+
       if (
-        error.message
-          .toLowerCase()
-          .includes(
-            "already"
-          ) ||
-        error.message
-          .toLowerCase()
-          .includes(
-            "duplicate"
-          )
+        errorText.includes(
+          "already"
+        ) ||
+        errorText.includes(
+          "duplicate"
+        )
       ) {
         setUsernameMessage(
           "❌ This username is already taken."
@@ -829,10 +565,8 @@ export default function HomePage() {
 
     setProfile({
       ...profile,
-
       username:
         data.username,
-
       novux_balance:
         Number(
           data.novux_balance
@@ -853,7 +587,7 @@ export default function HomePage() {
   }
 
   /* =========================================================
-     SAFE JSON READER
+     SAFE API RESPONSE READER
   ========================================================= */
 
   async function readApiResponse(
@@ -961,10 +695,7 @@ export default function HomePage() {
                   start >=
                 timeoutMs
               ) {
-                resolve(
-                  false
-                );
-
+                resolve(false);
                 return;
               }
 
@@ -1000,8 +731,7 @@ export default function HomePage() {
       await fetch(
         "/api/paypal/create-order",
         {
-          method:
-            "POST",
+          method: "POST",
 
           headers: {
             "Content-Type":
@@ -1044,7 +774,7 @@ export default function HomePage() {
   }
 
   /* =========================================================
-     RECURSIVE ERROR TEXT EXTRACTOR
+     ERROR TEXT EXTRACTOR
   ========================================================= */
 
   function collectErrorStrings(
@@ -1073,9 +803,7 @@ export default function HomePage() {
         "boolean"
     ) {
       return [
-        String(
-          value
-        ),
+        String(value),
       ];
     }
 
@@ -1146,9 +874,7 @@ export default function HomePage() {
 
     const normalized =
       texts
-        .join(
-          " | "
-        )
+        .join(" | ")
         .toLowerCase();
 
     console.error(
@@ -1226,18 +952,7 @@ export default function HomePage() {
         "instrument declined"
       )
     ) {
-      return "Payment was declined. Please check your card details or use another card.";
-    }
-
-    if (
-      normalized.includes(
-        "payment_method"
-      ) &&
-      normalized.includes(
-        "declin"
-      )
-    ) {
-      return "Payment was declined. Please check your card details or use another card.";
+      return "Payment was declined. Please check your payment method or use another one.";
     }
 
     if (
@@ -1251,18 +966,7 @@ export default function HomePage() {
         "transaction refused"
       )
     ) {
-      return "Payment was declined. Please check your card details or use another card.";
-    }
-
-    if (
-      normalized.includes(
-        "billing"
-      ) &&
-      normalized.includes(
-        "address"
-      )
-    ) {
-      return "Payment failed because the billing address could not be verified.";
+      return "Payment was declined. Please check your payment method or use another one.";
     }
 
     if (
@@ -1273,7 +977,7 @@ export default function HomePage() {
         "payer cannot pay"
       )
     ) {
-      return "Payment could not be completed with this payment method. Please use another card.";
+      return "Payment could not be completed with this payment method.";
     }
 
     if (
@@ -1287,8 +991,8 @@ export default function HomePage() {
     const firstUsefulText =
       texts.find(
         (item) =>
-          item.trim()
-            .length > 0
+          item.trim().length >
+          0
       );
 
     return (
@@ -1323,8 +1027,7 @@ export default function HomePage() {
       await fetch(
         "/api/paypal/create-order/capture-order",
         {
-          method:
-            "POST",
+          method: "POST",
 
           headers: {
             "Content-Type":
@@ -1397,12 +1100,11 @@ export default function HomePage() {
 
   /* =========================================================
      CREATE PAYPAL SDK INSTANCE
-     
+
      IMPORTANT:
-     - NO /api/paypal/create-order/client-token
-     - NO client token
-     - Uses public Live Client ID directly
-     - This is the current PayPal v6 clientId flow
+     NO CLIENT TOKEN
+     NO CARD FIELDS
+     NO /client-token route
   ========================================================= */
 
   async function createPayPalInstance(
@@ -1421,24 +1123,13 @@ export default function HomePage() {
     }
 
     console.log(
-      "Creating PayPal SDK instance with DIRECT CLIENT ID..."
+      "Creating PayPal Standard SDK instance..."
     );
 
     console.log(
       "PayPal build marker:",
       PAYPAL_BUILD_MARKER
     );
-
-    console.log(
-      "PayPal requested components:",
-      components
-    );
-
-    /*
-    =======================================================
-    GET PUBLIC LIVE CLIENT ID
-    =======================================================
-    */
 
     const clientId =
       process.env
@@ -1459,19 +1150,16 @@ export default function HomePage() {
       "PayPal Live Client ID found."
     );
 
-    /*
-    =======================================================
-    INITIALIZE PAYPAL V6
-    =======================================================
-    */
+    console.log(
+      "PayPal components:",
+      components
+    );
 
     const paypalInstance =
       await window.paypal.createInstance(
         {
           clientId,
-
           components,
-
           pageType:
             "checkout",
         }
@@ -1493,7 +1181,7 @@ export default function HomePage() {
   }
 
   /* =========================================================
-     START PAYPAL PAYMENT
+     START PAYPAL STANDARD PAYMENT
   ========================================================= */
 
   async function startPayPalPayment(
@@ -1528,6 +1216,11 @@ export default function HomePage() {
     setPaymentMessage("");
 
     try {
+      console.log(
+        "Starting PayPal payment:",
+        pkg
+      );
+
       const paypalInstance =
         await createPayPalInstance(
           [
@@ -1551,13 +1244,16 @@ export default function HomePage() {
                     data?.orderId ||
                     data?.orderID;
 
-                  if (
-                    !orderId
-                  ) {
+                  if (!orderId) {
                     throw new Error(
                       "PayPal did not return an order ID. No Novux were added."
                     );
                   }
+
+                  console.log(
+                    "PayPal approved order:",
+                    orderId
+                  );
 
                   const result =
                     await capturePayPalOrder(
@@ -1571,9 +1267,8 @@ export default function HomePage() {
                     result?.status;
 
                   if (
-                    !status ||
                     status !==
-                      "COMPLETED"
+                    "COMPLETED"
                   ) {
                     throw new Error(
                       getPaymentErrorMessage(
@@ -1595,13 +1290,13 @@ export default function HomePage() {
                     );
                   }
 
+                  await loadUser();
+
                   setPaymentMessage(
                     `✅ Payment completed! ${pkg.amount.toLocaleString()} Novux has been added to your balance.`
                   );
 
-                  await loadUser();
-
-                  setTimeout(
+                  window.setTimeout(
                     () => {
                       setSelectedPackage(
                         null
@@ -1609,21 +1304,6 @@ export default function HomePage() {
 
                       setPaymentMessage(
                         ""
-                      );
-
-                      paypalCardSessionRef.current =
-                        null;
-
-                      setCardFieldsReady(
-                        false
-                      );
-
-                      setBillingPostalCode(
-                        ""
-                      );
-
-                      setBillingCountryCode(
-                        "GE"
                       );
                     },
                     2500
@@ -1651,6 +1331,10 @@ export default function HomePage() {
 
             onCancel:
               () => {
+                console.log(
+                  "PayPal payment cancelled."
+                );
+
                 setPaymentLoading(
                   false
                 );
@@ -1695,6 +1379,10 @@ export default function HomePage() {
           })
         );
 
+      console.log(
+        "Starting PayPal checkout..."
+      );
+
       await paymentSession.start(
         {
           presentationMode:
@@ -1724,556 +1412,6 @@ export default function HomePage() {
   }
 
   /* =========================================================
-     CARD FIELDS
-  ========================================================= */
-
-  async function setupCardFields(
-    pkg: NovuxPackageData
-  ) {
-    if (!profile) {
-      return;
-    }
-
-    setCardFieldsReady(
-      false
-    );
-
-    paypalCardSessionRef.current =
-      null;
-
-    try {
-      const paypalInstance =
-        await createPayPalInstance(
-          [
-            "card-fields",
-          ]
-        );
-
-      console.log(
-        "Checking PayPal card eligibility..."
-      );
-
-      const paymentMethods =
-        await paypalInstance.findEligibleMethods(
-          {
-            currencyCode:
-              "USD",
-          }
-        );
-
-      console.log(
-        "PayPal eligible payment methods:",
-        paymentMethods
-      );
-
-      const cardEligible =
-        paymentMethods?.isEligible?.(
-          "advanced_cards"
-        );
-
-      console.log(
-        "PayPal advanced_cards eligible:",
-        cardEligible
-      );
-
-      if (
-        !cardEligible
-      ) {
-        setCardFieldsReady(
-          false
-        );
-
-        setPaymentMessage(
-          "Credit/debit card payments are not available for this PayPal account or region."
-        );
-
-        return;
-      }
-
-      const cardSession =
-        paypalInstance.createCardFieldsOneTimePaymentSession();
-
-      if (
-        !cardSession
-      ) {
-        throw new Error(
-          "PayPal could not create the card payment session."
-        );
-      }
-
-      paypalCardSessionRef.current =
-        cardSession;
-
-      const numberContainer =
-        document.getElementById(
-          "paypal-card-number"
-        );
-
-      const expiryContainer =
-        document.getElementById(
-          "paypal-card-expiry"
-        );
-
-      const cvvContainer =
-        document.getElementById(
-          "paypal-card-cvv"
-        );
-
-      if (
-        !numberContainer ||
-        !expiryContainer ||
-        !cvvContainer
-      ) {
-        paypalCardSessionRef.current =
-          null;
-
-        setCardFieldsReady(
-          false
-        );
-
-        throw new Error(
-          "Could not find the card field containers."
-        );
-      }
-
-      numberContainer.innerHTML =
-        "";
-
-      expiryContainer.innerHTML =
-        "";
-
-      cvvContainer.innerHTML =
-        "";
-
-      const numberField =
-        cardSession.createCardFieldsComponent(
-          {
-            type: "number",
-
-            placeholder:
-              "Card number",
-
-            style: {
-              input: {
-                fontSize:
-                  "16px",
-
-                lineHeight:
-                  "24px",
-
-                color:
-                  "#111827",
-              },
-            },
-          }
-        );
-
-      const expiryField =
-        cardSession.createCardFieldsComponent(
-          {
-            type: "expiry",
-
-            placeholder:
-              "MM/YY",
-
-            style: {
-              input: {
-                fontSize:
-                  "16px",
-
-                lineHeight:
-                  "24px",
-
-                color:
-                  "#111827",
-              },
-            },
-          }
-        );
-
-      const cvvField =
-        cardSession.createCardFieldsComponent(
-          {
-            type: "cvv",
-
-            placeholder:
-              "CVV",
-
-            style: {
-              input: {
-                fontSize:
-                  "16px",
-
-                lineHeight:
-                  "24px",
-
-                color:
-                  "#111827",
-              },
-            },
-          }
-        );
-
-      numberContainer.appendChild(
-        numberField
-      );
-
-      expiryContainer.appendChild(
-        expiryField
-      );
-
-      cvvContainer.appendChild(
-        cvvField
-      );
-
-      setCardFieldsReady(
-        true
-      );
-
-      setPaymentMessage("");
-
-      console.log(
-        "PayPal Production Card Fields loaded successfully for:",
-        pkg
-      );
-    } catch (
-      error
-    ) {
-      console.error(
-        "Card fields setup error:",
-        error
-      );
-
-      paypalCardSessionRef.current =
-        null;
-
-      setCardFieldsReady(
-        false
-      );
-
-      setPaymentMessage(
-        error instanceof
-          Error
-          ? error.message
-          : "Could not load card payment."
-      );
-    }
-  }
-
-  /* =========================================================
-     PAY WITH CARD
-  ========================================================= */
-
-  async function payWithCard(
-    pkg: NovuxPackageData
-  ) {
-    const cardSession =
-      paypalCardSessionRef.current;
-
-    if (
-      !cardSession ||
-      !cardFieldsReady
-    ) {
-      setPaymentMessage(
-        "Card payment is not ready yet."
-      );
-
-      return;
-    }
-
-    if (!profile) {
-      setPaymentMessage(
-        "Please log in first."
-      );
-
-      return;
-    }
-
-    const postalCode =
-      billingPostalCode.trim();
-
-    if (!postalCode) {
-      setPaymentMessage(
-        "Please enter your billing postal code."
-      );
-
-      return;
-    }
-
-    if (
-      postalCode.length <
-        3 ||
-      postalCode.length >
-        12
-    ) {
-      setPaymentMessage(
-        "Please enter a valid billing postal code."
-      );
-
-      return;
-    }
-
-    const countryCode =
-      billingCountryCode
-        .trim()
-        .toUpperCase();
-
-    if (
-      countryCode.length !==
-      2
-    ) {
-      setPaymentMessage(
-        "Please select a valid billing country."
-      );
-
-      return;
-    }
-
-    setPaymentLoading(
-      true
-    );
-
-    setPaymentMessage("");
-
-    try {
-      const orderID =
-        await createPayPalOrder(
-          pkg
-        );
-
-      console.log(
-        "Created PayPal card order:",
-        orderID
-      );
-
-      console.log(
-        "Submitting PayPal Card Fields..."
-      );
-
-      console.log(
-        "Billing country:",
-        countryCode
-      );
-
-      console.log(
-        "Billing postal code:",
-        postalCode
-      );
-
-      const result =
-        await cardSession.submit(
-          orderID,
-          {
-            billingAddress:
-              {
-                postalCode,
-                countryCode,
-              },
-          }
-        );
-
-      console.log(
-        "FULL CARD SUBMIT RESULT:",
-        result
-      );
-
-      const state =
-        result?.state;
-
-      console.log(
-        "PayPal Card Fields state:",
-        state
-      );
-
-      const finalOrderID =
-        result?.data
-          ?.orderId ||
-        result?.data
-          ?.orderID ||
-        orderID;
-
-      console.log(
-        "Final PayPal order ID:",
-        finalOrderID
-      );
-
-      if (
-        state ===
-        "canceled"
-      ) {
-        setPaymentMessage(
-          "Payment was cancelled. No Novux were added."
-        );
-
-        return;
-      }
-
-      if (
-        state ===
-        "failed"
-      ) {
-        console.error(
-          "PayPal Card Fields payment failed:",
-          result
-        );
-
-        throw new Error(
-          getPaymentErrorMessage(
-            result,
-            "Card payment failed. No Novux were added."
-          )
-        );
-      }
-
-      if (
-        state !==
-        "succeeded"
-      ) {
-        console.error(
-          "Unexpected PayPal Card Fields result:",
-          result
-        );
-
-        throw new Error(
-          "PayPal could not confirm your card payment. No Novux were added."
-        );
-      }
-
-      console.log(
-        "Card payment submission succeeded."
-      );
-
-      console.log(
-        "Now capturing order:",
-        finalOrderID
-      );
-
-      const capture =
-        await capturePayPalOrder(
-          finalOrderID
-        );
-
-      console.log(
-        "Capture result:",
-        capture
-      );
-
-      const captureStatus =
-        capture?.captureStatus ||
-        capture?.capture?.status ||
-        capture?.paypalStatus ||
-        capture?.status;
-
-      if (
-        !captureStatus
-      ) {
-        throw new Error(
-          "Payment could not be verified. No Novux were added."
-        );
-      }
-
-      if (
-        captureStatus !==
-        "COMPLETED"
-      ) {
-        throw new Error(
-          getPaymentErrorMessage(
-            capture,
-            `Payment was not completed. PayPal status: ${captureStatus}. No Novux were added.`
-          )
-        );
-      }
-
-      if (
-        !capture ||
-        !capture.success
-      ) {
-        throw new Error(
-          getPaymentErrorMessage(
-            capture,
-            "Payment failed. No Novux were added."
-          )
-        );
-      }
-
-      setPaymentMessage(
-        `✅ Payment completed! ${pkg.amount.toLocaleString()} Novux has been added to your balance.`
-      );
-
-      await loadUser();
-
-      setTimeout(
-        () => {
-          setSelectedPackage(
-            null
-          );
-
-          setPaymentMessage(
-            ""
-          );
-
-          paypalCardSessionRef.current =
-            null;
-
-          setCardFieldsReady(
-            false
-          );
-
-          setBillingPostalCode(
-            ""
-          );
-
-          setBillingCountryCode(
-            "GE"
-          );
-        },
-        2500
-      );
-    } catch (
-      error
-    ) {
-      console.error(
-        "Card payment error:",
-        error
-      );
-
-      let errorMessage =
-        "Card payment failed. No Novux were added.";
-
-      if (
-        error instanceof
-        Error
-      ) {
-        errorMessage =
-          error.message;
-      } else {
-        try {
-          errorMessage =
-            JSON.stringify(
-              error
-            );
-        } catch {
-          errorMessage =
-            "Card payment failed. No Novux were added.";
-        }
-      }
-
-      console.error(
-        "FINAL CARD ERROR:",
-        errorMessage
-      );
-
-      setPaymentMessage(
-        errorMessage
-      );
-    } finally {
-      setPaymentLoading(
-        false
-      );
-    }
-  }
-
-  /* =========================================================
      OPEN PACKAGE
   ========================================================= */
 
@@ -2281,8 +1419,7 @@ export default function HomePage() {
     amount: number,
     price: number
   ) {
-    const pkg:
-      NovuxPackageData = {
+    const pkg: NovuxPackageData = {
       amount,
       price,
       label:
@@ -2299,30 +1436,6 @@ export default function HomePage() {
 
     setPaymentMessage(
       ""
-    );
-
-    setBillingPostalCode(
-      ""
-    );
-
-    setBillingCountryCode(
-      "GE"
-    );
-
-    paypalCardSessionRef.current =
-      null;
-
-    setCardFieldsReady(
-      false
-    );
-
-    window.setTimeout(
-      () => {
-        void setupCardFields(
-          pkg
-        );
-      },
-      500
     );
   }
 
@@ -2341,21 +1454,8 @@ export default function HomePage() {
       null
     );
 
-    paypalCardSessionRef.current =
-      null;
-
-    setCardFieldsReady(
-      false
-    );
-
-    setPaymentMessage("");
-
-    setBillingPostalCode(
+    setPaymentMessage(
       ""
-    );
-
-    setBillingCountryCode(
-      "GE"
     );
   }
 
@@ -2366,9 +1466,7 @@ export default function HomePage() {
   async function logout() {
     await supabase.auth.signOut();
 
-    router.push(
-      "/login"
-    );
+    router.push("/login");
   }
 
   const avatarLetter =
@@ -2377,8 +1475,16 @@ export default function HomePage() {
       ?.toUpperCase() ||
     "N";
 
+  /* =========================================================
+     PAGE
+  ========================================================= */
+
   return (
     <main className="min-h-screen bg-[#f3f3f3] text-[#191919]">
+
+      {/* =====================================================
+          TOP NAVBAR
+      ===================================================== */}
 
       <header className="sticky top-0 z-50 h-16 border-b border-gray-200 bg-white">
 
@@ -2500,7 +1606,13 @@ export default function HomePage() {
 
       </header>
 
+      {/* =====================================================
+          LAYOUT
+      ===================================================== */}
+
       <div className="mx-auto flex max-w-[1500px]">
+
+        {/* SIDEBAR */}
 
         <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 shrink-0 border-r border-gray-200 bg-white p-4 lg:block">
 
@@ -2511,9 +1623,7 @@ export default function HomePage() {
               text="Home"
               active
               onClick={() =>
-                router.push(
-                  "/"
-                )
+                router.push("/")
               }
             />
 
@@ -2638,7 +1748,11 @@ export default function HomePage() {
 
         </aside>
 
+        {/* MAIN CONTENT */}
+
         <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+
+          {/* MOBILE SEARCH */}
 
           <div className="mb-6 md:hidden">
 
@@ -2662,6 +1776,8 @@ export default function HomePage() {
             </div>
 
           </div>
+
+          {/* WELCOME */}
 
           {profile && (
             <section className="mb-8">
@@ -2789,6 +1905,8 @@ export default function HomePage() {
             </section>
           )}
 
+          {/* NOVA STATS */}
+
           <section className="mb-8">
 
             <div className="grid gap-4 sm:grid-cols-3">
@@ -2823,6 +1941,8 @@ export default function HomePage() {
             </div>
 
           </section>
+
+          {/* NOVA UPGRADER */}
 
           <section className="mb-12">
 
@@ -2974,6 +2094,8 @@ export default function HomePage() {
 
           </section>
 
+          {/* CONTINUE PLAYING */}
+
           <GameSection
             title="Continue Playing"
             subtitle="Jump back into your recent games."
@@ -3025,6 +2147,8 @@ export default function HomePage() {
 
           </GameSection>
 
+          {/* POPULAR */}
+
           <GameSection
             title="Popular on Nova"
             subtitle="Games players are checking out."
@@ -3075,6 +2199,8 @@ export default function HomePage() {
             />
 
           </GameSection>
+
+          {/* CATEGORIES */}
 
           <section className="mt-12">
 
@@ -3135,6 +2261,8 @@ export default function HomePage() {
             </div>
 
           </section>
+
+          {/* CREATE */}
 
           <section className="mt-12 mb-10">
 
@@ -3362,7 +2490,7 @@ export default function HomePage() {
       )}
 
       {/* =========================================================
-          PAYMENT MODAL
+          PAYPAL PAYMENT MODAL
       ========================================================= */}
 
       {selectedPackage && (
@@ -3381,10 +2509,12 @@ export default function HomePage() {
             onClick={(e) =>
               e.stopPropagation()
             }
-            className="flex max-h-[calc(100vh-24px)] w-full max-w-xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl sm:max-h-[calc(100vh-40px)]"
+            className="w-full max-w-xl overflow-hidden rounded-3xl bg-white shadow-2xl"
           >
 
-            <div className="shrink-0 bg-gradient-to-r from-blue-600 to-purple-600 p-5 text-white sm:p-6">
+            {/* HEADER */}
+
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-5 text-white sm:p-6">
 
               <div className="flex items-start justify-between gap-4">
 
@@ -3431,293 +2561,120 @@ export default function HomePage() {
 
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto">
+            {/* BODY */}
 
-              <div className="p-5 sm:p-6">
+            <div className="p-5 sm:p-6">
 
-                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
+              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
 
-                  <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center justify-between gap-4">
 
-                    <div className="min-w-0">
+                  <div className="min-w-0">
 
-                      <p className="text-sm font-black text-gray-900">
-                        Pay with PayPal
-                      </p>
+                    <p className="text-sm font-black text-gray-900">
+                      Pay with PayPal
+                    </p>
 
-                      <p className="mt-1 text-xs text-gray-500">
-                        Pay using your PayPal account.
-                      </p>
-
-                    </div>
-
-                    <div className="shrink-0 text-2xl">
-                      🅿️
-                    </div>
+                    <p className="mt-1 text-xs leading-5 text-gray-500">
+                      Continue to PayPal's secure checkout
+                      to complete your purchase.
+                    </p>
 
                   </div>
 
-                  <button
-                    type="button"
-                    disabled={
-                      paymentLoading ||
-                      !paypalReady
-                    }
-                    onClick={() =>
-                      startPayPalPayment(
-                        selectedPackage
-                      )
-                    }
-                    className="mt-4 w-full rounded-xl bg-[#ffc439] py-3.5 text-sm font-black text-[#003087] transition hover:bg-[#f7b900] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {!paypalReady
-                      ? "Loading PayPal..."
-                      : paymentLoading
-                      ? "Processing..."
-                      : "Continue with PayPal"}
-                  </button>
+                  <div className="shrink-0 text-3xl">
+                    🅿️
+                  </div>
 
                 </div>
 
-                <div className="my-4 flex items-center gap-3 sm:my-5">
+                <button
+                  type="button"
+                  disabled={
+                    paymentLoading ||
+                    !paypalReady
+                  }
+                  onClick={() =>
+                    startPayPalPayment(
+                      selectedPackage
+                    )
+                  }
+                  className="mt-5 w-full rounded-xl bg-[#ffc439] py-4 text-sm font-black text-[#003087] transition hover:bg-[#f7b900] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {!paypalReady
+                    ? "Loading PayPal..."
+                    : paymentLoading
+                    ? "Processing..."
+                    : "Continue with PayPal"}
+                </button>
 
-                  <div className="h-px flex-1 bg-gray-200" />
+              </div>
 
-                  <span className="shrink-0 text-[10px] font-bold text-gray-400 sm:text-xs">
-                    OR PAY WITH CARD
-                  </span>
-
-                  <div className="h-px flex-1 bg-gray-200" />
-
+              {paymentMessage && (
+                <div
+                  className={`mt-4 break-words rounded-xl p-4 text-sm font-semibold ${
+                    paymentMessage.startsWith(
+                      "✅"
+                    )
+                      ? "bg-green-50 text-green-700"
+                      : "bg-red-50 text-red-600"
+                  }`}
+                >
+                  {
+                    paymentMessage
+                  }
                 </div>
+              )}
 
-                <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
+              <div className="mt-5 rounded-2xl bg-gray-50 p-4">
 
-                  <p className="text-sm font-black text-gray-900">
-                    Credit or Debit Card
-                  </p>
+                <div className="flex items-center justify-between gap-4">
 
-                  <p className="mt-1 text-xs leading-5 text-gray-500">
-                    Your card details are securely handled by PayPal.
-                  </p>
+                  <div>
 
-                  <div className="mt-4">
+                    <p className="text-xs font-semibold text-gray-400">
+                      Total to pay
+                    </p>
 
-                    <label className="mb-2 block text-xs font-bold text-gray-600">
-                      Card Number
-                    </label>
-
-                    <div
-                      id="paypal-card-number"
-                      className="h-12 w-full overflow-hidden rounded-xl border border-gray-200 bg-white px-3"
-                    />
+                    <p className="text-xl font-black text-gray-900">
+                      $
+                      {
+                        selectedPackage.price.toFixed(
+                          2
+                        )
+                      }
+                    </p>
 
                   </div>
 
-                  <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4">
+                  <div className="text-right">
 
-                    <div>
+                    <p className="text-xs font-semibold text-gray-400">
+                      You receive
+                    </p>
 
-                      <label className="mb-2 block text-xs font-bold text-gray-600">
-                        Expiry
-                      </label>
-
-                      <div
-                        id="paypal-card-expiry"
-                        className="h-12 w-full overflow-hidden rounded-xl border border-gray-200 bg-white px-3"
-                      />
-
-                    </div>
-
-                    <div>
-
-                      <label className="mb-2 block text-xs font-bold text-gray-600">
-                        CVV
-                      </label>
-
-                      <div
-                        id="paypal-card-cvv"
-                        className="h-12 w-full overflow-hidden rounded-xl border border-gray-200 bg-white px-3"
-                      />
-
-                    </div>
-
-                  </div>
-
-                  <div className="mt-4">
-
-                    <label className="mb-2 block text-xs font-bold text-gray-600">
-                      Billing Country
-                    </label>
-
-                    <select
-                      value={
-                        billingCountryCode
-                      }
-                      onChange={(e) =>
-                        setBillingCountryCode(
-                          e.target.value
-                        )
-                      }
-                      disabled={
-                        paymentLoading
-                      }
-                      className="h-12 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-                    >
-                      {COUNTRY_OPTIONS.map(
-                        (
-                          country
-                        ) => (
-                          <option
-                            key={
-                              country.code
-                            }
-                            value={
-                              country.code
-                            }
-                          >
-                            {
-                              country.name
-                            }
-                          </option>
-                        )
-                      )}
-                    </select>
-
-                  </div>
-
-                  <div className="mt-4">
-
-                    <label className="mb-2 block text-xs font-bold text-gray-600">
-                      Billing Postal Code
-                    </label>
-
-                    <input
-                      type="text"
-                      value={
-                        billingPostalCode
-                      }
-                      onChange={(e) =>
-                        setBillingPostalCode(
-                          e.target.value
-                        )
-                      }
-                      disabled={
-                        paymentLoading
-                      }
-                      autoComplete="postal-code"
-                      inputMode="text"
-                      placeholder="Example: 0105"
-                      className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-                    />
-
-                    <p className="mt-1 text-[11px] leading-4 text-gray-400">
-                      Enter the postal code associated with your billing address.
+                    <p className="text-sm font-black text-blue-600">
+                      💎{" "}
+                      {
+                        selectedPackage.amount.toLocaleString()
+                      }{" "}
+                      Novux
                     </p>
 
                   </div>
 
                 </div>
 
-                {paymentMessage && (
-                  <div
-                    className={`mt-4 break-words rounded-xl p-4 text-sm font-semibold ${
-                      paymentMessage.startsWith(
-                        "✅"
-                      )
-                        ? "bg-green-50 text-green-700"
-                        : "bg-red-50 text-red-600"
-                    }`}
-                  >
-                    {
-                      paymentMessage
-                    }
-                  </div>
-                )}
-
-                <div className="h-4 sm:h-5" />
-
               </div>
 
-            </div>
-
-            <div className="shrink-0 border-t border-gray-200 bg-white p-4 shadow-[0_-8px_20px_rgba(0,0,0,0.06)] sm:p-5">
-
-              <div className="mb-3 flex items-center justify-between gap-4">
-
-                <div>
-
-                  <p className="text-xs font-semibold text-gray-400">
-                    Total to pay
-                  </p>
-
-                  <p className="text-lg font-black text-gray-900">
-                    $
-                    {
-                      selectedPackage.price.toFixed(
-                        2
-                      )
-                    }
-                  </p>
-
-                </div>
-
-                <div className="text-right">
-
-                  <p className="text-xs font-semibold text-gray-400">
-                    You receive
-                  </p>
-
-                  <p className="text-sm font-black text-blue-600">
-                    💎{" "}
-                    {
-                      selectedPackage.amount.toLocaleString()
-                    }{" "}
-                    Novux
-                  </p>
-
-                </div>
-
-              </div>
-
-              <button
-                type="button"
-                disabled={
-                  paymentLoading ||
-                  !paypalReady ||
-                  !cardFieldsReady ||
-                  !billingPostalCode.trim() ||
-                  billingCountryCode.length !==
-                    2
-                }
-                onClick={() =>
-                  payWithCard(
-                    selectedPackage
-                  )
-                }
-                className="w-full rounded-xl bg-blue-600 py-4 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 hover:shadow-blue-600/30 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {paymentLoading
-                  ? "Processing Payment..."
-                  : !paypalReady
-                  ? "Loading PayPal..."
-                  : !cardFieldsReady
-                  ? "Loading Card Fields..."
-                  : !billingPostalCode.trim()
-                  ? "Enter Billing Postal Code"
-                  : `Pay $${selectedPackage.price.toFixed(
-                      2
-                    )}`}
-              </button>
-
-              <div className="mt-3 text-center">
+              <div className="mt-5 rounded-2xl border border-gray-100 bg-white p-4 text-center">
 
                 <p className="text-xs font-semibold text-gray-400">
                   🔒 Secure payment powered by PayPal
                 </p>
 
                 <p className="mt-1 text-[11px] leading-4 text-gray-400">
-                  Nova does not store your card number, expiry date, or CVV.
+                  Nova does not store your payment details.
                 </p>
 
               </div>
@@ -3728,6 +2685,10 @@ export default function HomePage() {
 
         </div>
       )}
+
+      {/* =========================================================
+          CHANGE USERNAME MODAL
+      ========================================================= */}
 
       {showUsernameEditor && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
