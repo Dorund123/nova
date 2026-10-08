@@ -30,269 +30,37 @@ BILLING COUNTRY LIST
 */
 
 const COUNTRY_CODES = [
-  "AF",
-  "AX",
-  "AL",
-  "DZ",
-  "AS",
-  "AD",
-  "AO",
-  "AI",
-  "AQ",
-  "AG",
-  "AR",
-  "AM",
-  "AW",
-  "AU",
-  "AT",
-  "AZ",
-  "BS",
-  "BH",
-  "BD",
-  "BB",
-  "BY",
-  "BE",
-  "BZ",
-  "BJ",
-  "BM",
-  "BT",
-  "BO",
-  "BQ",
-  "BA",
-  "BW",
-  "BV",
-  "BR",
-  "IO",
-  "BN",
-  "BG",
-  "BF",
-  "BI",
-  "CV",
-  "KH",
-  "CM",
-  "CA",
-  "KY",
-  "CF",
-  "TD",
-  "CL",
-  "CN",
-  "CX",
-  "CC",
-  "CO",
-  "KM",
-  "CG",
-  "CD",
-  "CK",
-  "CR",
-  "CI",
-  "HR",
-  "CU",
-  "CW",
-  "CY",
-  "CZ",
-  "DK",
-  "DJ",
-  "DM",
-  "DO",
-  "EC",
-  "EG",
-  "SV",
-  "GQ",
-  "ER",
-  "EE",
-  "SZ",
-  "ET",
-  "FK",
-  "FO",
-  "FJ",
-  "FI",
-  "FR",
-  "GF",
-  "PF",
-  "TF",
-  "GA",
-  "GM",
-  "GE",
-  "DE",
-  "GH",
-  "GI",
-  "GR",
-  "GL",
-  "GD",
-  "GP",
-  "GU",
-  "GT",
-  "GG",
-  "GN",
-  "GW",
-  "GY",
-  "HT",
-  "HM",
-  "VA",
-  "HN",
-  "HK",
-  "HU",
-  "IS",
-  "IN",
-  "ID",
-  "IR",
-  "IQ",
-  "IE",
-  "IM",
-  "IL",
-  "IT",
-  "JM",
-  "JP",
-  "JE",
-  "JO",
-  "KZ",
-  "KE",
-  "KI",
-  "KP",
-  "KR",
-  "KW",
-  "KG",
-  "LA",
-  "LV",
-  "LB",
-  "LS",
-  "LR",
-  "LY",
-  "LI",
-  "LT",
-  "LU",
-  "MO",
-  "MG",
-  "MW",
-  "MY",
-  "MV",
-  "ML",
-  "MT",
-  "MH",
-  "MQ",
-  "MR",
-  "MU",
-  "YT",
-  "MX",
-  "FM",
-  "MD",
-  "MC",
-  "MN",
-  "ME",
-  "MS",
-  "MA",
-  "MZ",
-  "MM",
-  "NA",
-  "NR",
-  "NP",
-  "NL",
-  "NC",
-  "NZ",
-  "NI",
-  "NE",
-  "NG",
-  "NU",
-  "NF",
-  "MK",
-  "MP",
-  "NO",
-  "OM",
-  "PK",
-  "PW",
-  "PS",
-  "PA",
-  "PG",
-  "PY",
-  "PE",
-  "PH",
-  "PN",
-  "PL",
-  "PT",
-  "PR",
-  "QA",
-  "RE",
-  "RO",
-  "RU",
-  "RW",
-  "BL",
-  "SH",
-  "KN",
-  "LC",
-  "MF",
-  "PM",
-  "VC",
-  "WS",
-  "SM",
-  "ST",
-  "SA",
-  "SN",
-  "RS",
-  "SC",
-  "SL",
-  "SG",
-  "SX",
-  "SK",
-  "SI",
-  "SB",
-  "SO",
-  "ZA",
-  "GS",
-  "SS",
-  "ES",
-  "LK",
-  "SD",
-  "SR",
-  "SJ",
-  "SE",
-  "CH",
-  "SY",
-  "TW",
-  "TJ",
-  "TZ",
-  "TH",
-  "TL",
-  "TG",
-  "TK",
-  "TO",
-  "TT",
-  "TN",
-  "TR",
-  "TM",
-  "TC",
-  "TV",
-  "UG",
-  "UA",
-  "AE",
-  "GB",
-  "US",
-  "UM",
-  "UY",
-  "UZ",
-  "VU",
-  "VE",
-  "VN",
-  "VG",
-  "VI",
-  "WF",
-  "EH",
-  "YE",
-  "ZM",
-  "ZW",
+  "AF","AX","AL","DZ","AS","AD","AO","AI","AQ","AG","AR","AM","AW","AU","AT",
+  "AZ","BS","BH","BD","BB","BY","BE","BZ","BJ","BM","BT","BO","BQ","BA","BW",
+  "BV","BR","IO","BN","BG","BF","BI","CV","KH","CM","CA","KY","CF","TD","CL",
+  "CN","CX","CC","CO","KM","CG","CD","CK","CR","CI","HR","CU","CW","CY","CZ",
+  "DK","DJ","DM","DO","EC","EG","SV","GQ","ER","EE","SZ","ET","FK","FO","FJ",
+  "FI","FR","GF","PF","TF","GA","GM","GE","DE","GH","GI","GR","GL","GD","GP",
+  "GU","GT","GG","GN","GW","GY","HT","HM","VA","HN","HK","HU","IS","IN","ID",
+  "IR","IQ","IE","IM","IL","IT","JM","JP","JE","JO","KZ","KE","KI","KP","KR",
+  "KW","KG","LA","LV","LB","LS","LR","LY","LI","LT","LU","MO","MG","MW","MY",
+  "MV","ML","MT","MH","MQ","MR","MU","YT","MX","FM","MD","MC","MN","ME","MS",
+  "MA","MZ","MM","NA","NR","NP","NL","NC","NZ","NI","NE","NG","NU","NF","MK",
+  "MP","NO","OM","PK","PW","PS","PA","PG","PY","PE","PH","PN","PL","PT","PR",
+  "QA","RE","RO","RU","RW","BL","SH","KN","LC","MF","PM","VC","WS","SM","ST",
+  "SA","SN","RS","SC","SL","SG","SX","SK","SI","SB","SO","ZA","GS","SS","ES",
+  "LK","SD","SR","SJ","SE","CH","SY","TW","TJ","TZ","TH","TL","TG","TK","TO",
+  "TT","TN","TR","TM","TC","TV","UG","UA","AE","GB","US","UM","UY","UZ","VU",
+  "VE","VN","VG","VI","WF","EH","YE","ZM","ZW",
 ] as const;
 
-const COUNTRY_OPTIONS = COUNTRY_CODES.map(
-  (code) => ({
+const COUNTRY_OPTIONS = COUNTRY_CODES
+  .map((code) => ({
     code,
     name:
       new Intl.DisplayNames(
         ["en"],
         { type: "region" }
       ).of(code) || code,
-  })
-).sort((a, b) =>
-  a.name.localeCompare(b.name)
-);
+  }))
+  .sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
 
 export default function HomePage() {
   const router = useRouter();
@@ -829,6 +597,89 @@ export default function HomePage() {
 
   /*
   =========================================================
+  PAYPAL ERROR TRANSLATOR
+  =========================================================
+  */
+
+  function getPaymentErrorMessage(
+    data: any,
+    fallback: string
+  ) {
+    const rawMessage =
+      data?.error ||
+      data?.message ||
+      data?.details?.[0]?.description ||
+      data?.capture?.status_details?.reason ||
+      data?.captureStatusDetails?.reason ||
+      "";
+
+    const normalized =
+      String(rawMessage)
+        .toLowerCase();
+
+    if (
+      normalized.includes(
+        "insufficient"
+      ) ||
+      normalized.includes(
+        "fund"
+      ) ||
+      normalized.includes(
+        "balance"
+      )
+    ) {
+      return "Payment declined because the card does not have enough funds.";
+    }
+
+    if (
+      normalized.includes(
+        "declin"
+      ) ||
+      normalized.includes(
+        "denied"
+      )
+    ) {
+      return "Payment was declined. Please check your card details or use another card.";
+    }
+
+    if (
+      normalized.includes(
+        "expired"
+      )
+    ) {
+      return "Payment failed because the card is expired.";
+    }
+
+    if (
+      normalized.includes(
+        "invalid"
+      ) &&
+      normalized.includes(
+        "card"
+      )
+    ) {
+      return "Payment failed because the card details are invalid.";
+    }
+
+    if (
+      normalized.includes(
+        "cvv"
+      ) ||
+      normalized.includes(
+        "security code"
+      )
+    ) {
+      return "Payment failed because the card security code is invalid.";
+    }
+
+    return (
+      rawMessage ||
+      fallback
+    );
+  }
+
+  /*
+  =========================================================
   CAPTURE PAYPAL ORDER
   =========================================================
   */
@@ -871,13 +722,58 @@ export default function HomePage() {
         response
       );
 
+    console.log(
+      "Capture API response:",
+      data
+    );
+
+    /*
+    =======================================================
+    IMPORTANT:
+    PayPal successful capture must be COMPLETED.
+    =======================================================
+    */
+
+    const captureStatus =
+      data?.captureStatus ||
+      data?.capture?.status ||
+      data?.paypalStatus ||
+      data?.status;
+
+    if (
+      captureStatus &&
+      captureStatus !== "COMPLETED"
+    ) {
+      throw new Error(
+        getPaymentErrorMessage(
+          data,
+          `Payment was not completed. PayPal status: ${captureStatus}.`
+        )
+      );
+    }
+
     if (
       !response.ok ||
       !data.success
     ) {
       throw new Error(
-        data?.error ||
+        getPaymentErrorMessage(
+          data,
           "Payment could not be completed."
+        )
+      );
+    }
+
+    /*
+    =======================================================
+    Do not trust a successful flag without a capture status.
+    The secure server route should return COMPLETED.
+    =======================================================
+    */
+
+    if (!captureStatus) {
+      console.warn(
+        "capture-order did not return captureStatus. Server route should return the PayPal capture status."
       );
     }
 
@@ -975,34 +871,68 @@ export default function HomePage() {
                     data.orderId
                   );
 
+                /*
+                =================================================
+                SUCCESS ONLY
+                =================================================
+                */
+
+                const status =
+                  result?.captureStatus ||
+                  result?.capture?.status ||
+                  result?.paypalStatus ||
+                  result?.status;
+
                 if (
-                  result.success
+                  status &&
+                  status !== "COMPLETED"
                 ) {
-                  setPaymentMessage(
-                    `✅ Payment completed! ${pkg.amount.toLocaleString()} Novux will be added to your balance.`
+                  throw new Error(
+                    getPaymentErrorMessage(
+                      result,
+                      "Payment was not completed."
+                    )
                   );
-
-                  await loadUser();
-
-                  setTimeout(() => {
-                    setSelectedPackage(
-                      null
-                    );
-
-                    setPaymentMessage("");
-
-                    paypalCardSessionRef.current =
-                      null;
-
-                    setCardFieldsReady(
-                      false
-                    );
-
-                    setBillingPostalCode("");
-
-                    setBillingCountryCode("GE");
-                  }, 2500);
                 }
+
+                if (
+                  !result ||
+                  !result.success
+                ) {
+                  throw new Error(
+                    getPaymentErrorMessage(
+                      result,
+                      "Payment could not be completed."
+                    )
+                  );
+                }
+
+                setPaymentMessage(
+                  `✅ Payment completed! ${pkg.amount.toLocaleString()} Novux has been added to your balance.`
+                );
+
+                /*
+                =================================================
+                REFRESH BALANCE IMMEDIATELY
+                =================================================
+                */
+
+                await loadUser();
+
+                setTimeout(() => {
+                  setSelectedPackage(null);
+
+                  setPaymentMessage("");
+
+                  paypalCardSessionRef.current =
+                    null;
+
+                  setCardFieldsReady(false);
+
+                  setBillingPostalCode("");
+
+                  setBillingCountryCode("GE");
+                }, 2500);
               } catch (error) {
                 console.error(
                   "Capture error:",
@@ -1012,7 +942,7 @@ export default function HomePage() {
                 setPaymentMessage(
                   error instanceof Error
                     ? error.message
-                    : "❌ Payment was approved, but Nova could not finish the purchase."
+                    : "Payment failed. No Novux was added."
                 );
               } finally {
                 setPaymentLoading(
@@ -1027,7 +957,7 @@ export default function HomePage() {
               );
 
               setPaymentMessage(
-                "Payment cancelled."
+                "Payment cancelled. No Novux was added."
               );
             },
           }
@@ -1058,7 +988,7 @@ export default function HomePage() {
       setPaymentMessage(
         error instanceof Error
           ? error.message
-          : "PayPal payment failed."
+          : "Payment failed. No Novux was added."
       );
     }
   }
@@ -1093,22 +1023,10 @@ export default function HomePage() {
       null;
 
     try {
-      /*
-      =====================================================
-      1. CREATE PAYPAL CARD SDK INSTANCE
-      =====================================================
-      */
-
       const paypalInstance =
         await createPayPalInstance([
           "card-fields",
         ]);
-
-      /*
-      =====================================================
-      2. CHECK CARD ELIGIBILITY
-      =====================================================
-      */
 
       console.log(
         "Checking PayPal card eligibility..."
@@ -1146,23 +1064,11 @@ export default function HomePage() {
         return;
       }
 
-      /*
-      =====================================================
-      3. CREATE CARD PAYMENT SESSION
-      =====================================================
-      */
-
       const cardSession =
         paypalInstance.createCardFieldsOneTimePaymentSession();
 
       paypalCardSessionRef.current =
         cardSession;
-
-      /*
-      =====================================================
-      4. FIND CONTAINERS
-      =====================================================
-      */
 
       const numberContainer =
         document.getElementById(
@@ -1196,21 +1102,9 @@ export default function HomePage() {
         return;
       }
 
-      /*
-      =====================================================
-      5. CLEAR OLD FIELDS
-      =====================================================
-      */
-
       numberContainer.innerHTML = "";
       expiryContainer.innerHTML = "";
       cvvContainer.innerHTML = "";
-
-      /*
-      =====================================================
-      6. CREATE NUMBER FIELD
-      =====================================================
-      */
 
       const numberField =
         cardSession.createCardFieldsComponent(
@@ -1221,12 +1115,6 @@ export default function HomePage() {
           }
         );
 
-      /*
-      =====================================================
-      7. CREATE EXPIRY FIELD
-      =====================================================
-      */
-
       const expiryField =
         cardSession.createCardFieldsComponent(
           {
@@ -1236,12 +1124,6 @@ export default function HomePage() {
           }
         );
 
-      /*
-      =====================================================
-      8. CREATE CVV FIELD
-      =====================================================
-      */
-
       const cvvField =
         cardSession.createCardFieldsComponent(
           {
@@ -1250,12 +1132,6 @@ export default function HomePage() {
               "CVV",
           }
         );
-
-      /*
-      =====================================================
-      9. MOUNT FIELDS
-      =====================================================
-      */
 
       numberContainer.appendChild(
         numberField
@@ -1271,9 +1147,42 @@ export default function HomePage() {
 
       /*
       =====================================================
-      10. READY
+      FORCE PAYPAL IFRAMES TO STAY SMALL
       =====================================================
       */
+
+      const numberIframe =
+        numberContainer.querySelector(
+          "iframe"
+        );
+
+      const expiryIframe =
+        expiryContainer.querySelector(
+          "iframe"
+        );
+
+      const cvvIframe =
+        cvvContainer.querySelector(
+          "iframe"
+        );
+
+      [
+        numberIframe,
+        expiryIframe,
+        cvvIframe,
+      ].forEach((iframe) => {
+        if (
+          iframe instanceof
+          HTMLIFrameElement
+        ) {
+          iframe.style.width = "100%";
+          iframe.style.height = "44px";
+          iframe.style.minHeight = "44px";
+          iframe.style.maxHeight = "44px";
+          iframe.style.border = "0";
+          iframe.style.display = "block";
+        }
+      });
 
       setCardFieldsReady(true);
 
@@ -1330,12 +1239,6 @@ export default function HomePage() {
       return;
     }
 
-    /*
-    =====================================================
-    BILLING POSTAL CODE VALIDATION
-    =====================================================
-    */
-
     const postalCode =
       billingPostalCode.trim();
 
@@ -1379,7 +1282,7 @@ export default function HomePage() {
     try {
       /*
       =====================================================
-      1. CREATE PAYPAL ORDER
+      1. CREATE ORDER
       =====================================================
       */
 
@@ -1393,7 +1296,7 @@ export default function HomePage() {
 
       /*
       =====================================================
-      2. SUBMIT CARD PAYMENT
+      2. SUBMIT CARD
       =====================================================
       */
 
@@ -1422,22 +1325,10 @@ export default function HomePage() {
           }
         );
 
-      /*
-      =====================================================
-      3. FULL RESULT
-      =====================================================
-      */
-
       console.log(
         "FULL CARD SUBMIT RESULT:",
         result
       );
-
-      /*
-      =====================================================
-      4. READ STATE
-      =====================================================
-      */
 
       const state =
         result?.state;
@@ -1446,12 +1337,6 @@ export default function HomePage() {
         "PayPal Card Fields state:",
         state
       );
-
-      /*
-      =====================================================
-      5. GET FINAL ORDER ID
-      =====================================================
-      */
 
       const finalOrderID =
         result?.data?.orderId ||
@@ -1464,7 +1349,7 @@ export default function HomePage() {
 
       /*
       =====================================================
-      6. CANCELLED
+      CANCELLED
       =====================================================
       */
 
@@ -1472,7 +1357,7 @@ export default function HomePage() {
         state === "canceled"
       ) {
         setPaymentMessage(
-          "Payment was cancelled."
+          "Payment was cancelled. No Novux was added."
         );
 
         return;
@@ -1480,7 +1365,7 @@ export default function HomePage() {
 
       /*
       =====================================================
-      7. FAILED
+      FAILED
       =====================================================
       */
 
@@ -1497,18 +1382,17 @@ export default function HomePage() {
           result?.data
         );
 
-        const paypalMessage =
-          result?.data?.message;
-
         throw new Error(
-          paypalMessage ||
-            "Card payment was not approved. Please check your card details, billing postal code, and try again."
+          getPaymentErrorMessage(
+            result,
+            "Card payment failed. No Novux was added."
+          )
         );
       }
 
       /*
       =====================================================
-      8. UNKNOWN STATE
+      UNKNOWN
       =====================================================
       */
 
@@ -1521,18 +1405,18 @@ export default function HomePage() {
         );
 
         throw new Error(
-          "PayPal could not confirm your card payment. Please try again."
+          "PayPal could not confirm your card payment. No Novux was added."
         );
       }
 
       /*
       =====================================================
-      9. SUCCESS
+      CARD SUBMISSION SUCCESSFUL
       =====================================================
       */
 
       console.log(
-        "Card payment succeeded."
+        "Card payment submission succeeded."
       );
 
       console.log(
@@ -1542,7 +1426,7 @@ export default function HomePage() {
 
       /*
       =====================================================
-      10. CAPTURE
+      CAPTURE
       =====================================================
       */
 
@@ -1558,7 +1442,31 @@ export default function HomePage() {
 
       /*
       =====================================================
-      11. CHECK CAPTURE
+      VERIFY REAL CAPTURE STATUS
+      =====================================================
+      */
+
+      const captureStatus =
+        capture?.captureStatus ||
+        capture?.capture?.status ||
+        capture?.paypalStatus ||
+        capture?.status;
+
+      if (
+        captureStatus &&
+        captureStatus !== "COMPLETED"
+      ) {
+        throw new Error(
+          getPaymentErrorMessage(
+            capture,
+            `Payment was not completed. PayPal status: ${captureStatus}. No Novux was added.`
+          )
+        );
+      }
+
+      /*
+      =====================================================
+      FINAL SUCCESS CHECK
       =====================================================
       */
 
@@ -1567,26 +1475,34 @@ export default function HomePage() {
         !capture.success
       ) {
         throw new Error(
-          capture?.error ||
-            "Payment was approved, but Nova could not complete the purchase."
+          getPaymentErrorMessage(
+            capture,
+            "Payment failed. No Novux was added."
+          )
         );
       }
 
       /*
       =====================================================
-      12. SUCCESS MESSAGE
+      SUCCESS
       =====================================================
       */
 
       setPaymentMessage(
-        `✅ Payment completed! ${pkg.amount.toLocaleString()} Novux will be added to your balance.`
+        `✅ Payment completed! ${pkg.amount.toLocaleString()} Novux has been added to your balance.`
       );
+
+      /*
+      =====================================================
+      REFRESH BALANCE IMMEDIATELY
+      =====================================================
+      */
 
       await loadUser();
 
       /*
       =====================================================
-      13. CLOSE
+      CLOSE
       =====================================================
       */
 
@@ -1611,7 +1527,7 @@ export default function HomePage() {
       );
 
       let errorMessage =
-        "Card payment failed.";
+        "Card payment failed. No Novux was added.";
 
       if (
         error instanceof Error
@@ -1624,7 +1540,7 @@ export default function HomePage() {
             JSON.stringify(error);
         } catch {
           errorMessage =
-            "Card payment failed.";
+            "Card payment failed. No Novux was added.";
         }
       }
 
@@ -1826,9 +1742,7 @@ export default function HomePage() {
 
       <div className="mx-auto flex max-w-[1500px]">
 
-        {/* ===================================================
-            SIDEBAR
-        =================================================== */}
+        {/* SIDEBAR */}
 
         <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 shrink-0 border-r border-gray-200 bg-white p-4 lg:block">
 
@@ -1941,9 +1855,7 @@ export default function HomePage() {
 
         </aside>
 
-        {/* ===================================================
-            MAIN CONTENT
-        =================================================== */}
+        {/* MAIN CONTENT */}
 
         <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
 
@@ -1970,9 +1882,7 @@ export default function HomePage() {
 
           </div>
 
-          {/* =================================================
-              WELCOME
-          ================================================= */}
+          {/* WELCOME */}
 
           {profile && (
             <section className="mb-8">
@@ -2079,9 +1989,7 @@ export default function HomePage() {
             </section>
           )}
 
-          {/* =================================================
-              NOVA STATS
-          ================================================= */}
+          {/* NOVA STATS */}
 
           <section className="mb-8">
 
@@ -2112,9 +2020,7 @@ export default function HomePage() {
 
           </section>
 
-          {/* =================================================
-              NOVA UPGRADER
-          ================================================= */}
+          {/* NOVA UPGRADER */}
 
           <section className="mb-12">
 
@@ -2262,9 +2168,7 @@ export default function HomePage() {
 
           </section>
 
-          {/* =================================================
-              CONTINUE PLAYING
-          ================================================= */}
+          {/* CONTINUE PLAYING */}
 
           <GameSection
             title="Continue Playing"
@@ -2309,9 +2213,7 @@ export default function HomePage() {
 
           </GameSection>
 
-          {/* =================================================
-              POPULAR
-          ================================================= */}
+          {/* POPULAR */}
 
           <GameSection
             title="Popular on Nova"
@@ -2356,9 +2258,7 @@ export default function HomePage() {
 
           </GameSection>
 
-          {/* =================================================
-              CATEGORIES
-          ================================================= */}
+          {/* CATEGORIES */}
 
           <section className="mt-12">
 
@@ -2412,9 +2312,7 @@ export default function HomePage() {
 
           </section>
 
-          {/* =================================================
-              CREATE
-          ================================================= */}
+          {/* CREATE */}
 
           <section className="mt-12 mb-10">
 
@@ -2653,10 +2551,6 @@ export default function HomePage() {
             className="flex max-h-[calc(100vh-24px)] w-full max-w-xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl sm:max-h-[calc(100vh-40px)]"
           >
 
-            {/* =================================================
-                CHECKOUT HEADER
-            ================================================= */}
-
             <div className="shrink-0 bg-gradient-to-r from-blue-600 to-purple-600 p-5 text-white sm:p-6">
 
               <div className="flex items-start justify-between gap-4">
@@ -2696,17 +2590,11 @@ export default function HomePage() {
 
             </div>
 
-            {/* =================================================
-                SCROLLABLE CHECKOUT CONTENT
-            ================================================= */}
-
             <div className="min-h-0 flex-1 overflow-y-auto">
 
               <div className="p-5 sm:p-6">
 
-                {/* =================================================
-                    PAYPAL
-                ================================================= */}
+                {/* PAYPAL */}
 
                 <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
 
@@ -2752,9 +2640,7 @@ export default function HomePage() {
 
                 </div>
 
-                {/* =================================================
-                    DIVIDER
-                ================================================= */}
+                {/* DIVIDER */}
 
                 <div className="my-4 flex items-center gap-3 sm:my-5">
 
@@ -2768,23 +2654,17 @@ export default function HomePage() {
 
                 </div>
 
-                {/* =================================================
-                    CARD FIELDS
-                ================================================= */}
+                {/* CARD */}
 
                 <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
 
-                  <div>
+                  <p className="text-sm font-black text-gray-900">
+                    Credit or Debit Card
+                  </p>
 
-                    <p className="text-sm font-black text-gray-900">
-                      Credit or Debit Card
-                    </p>
-
-                    <p className="mt-1 text-xs leading-5 text-gray-500">
-                      Your card details are securely handled by PayPal.
-                    </p>
-
-                  </div>
+                  <p className="mt-1 text-xs leading-5 text-gray-500">
+                    Your card details are securely handled by PayPal.
+                  </p>
 
                   {/* CARD NUMBER */}
 
@@ -2796,7 +2676,7 @@ export default function HomePage() {
 
                     <div
                       id="paypal-card-number"
-                      className="min-h-[48px] rounded-xl border border-gray-200 bg-white px-3 py-2"
+                      className="h-12 w-full overflow-hidden rounded-xl border border-gray-200 bg-white px-3"
                     />
 
                   </div>
@@ -2813,7 +2693,7 @@ export default function HomePage() {
 
                       <div
                         id="paypal-card-expiry"
-                        className="min-h-[48px] rounded-xl border border-gray-200 bg-white px-3 py-2"
+                        className="h-12 w-full overflow-hidden rounded-xl border border-gray-200 bg-white px-3"
                       />
 
                     </div>
@@ -2826,16 +2706,14 @@ export default function HomePage() {
 
                       <div
                         id="paypal-card-cvv"
-                        className="min-h-[48px] rounded-xl border border-gray-200 bg-white px-3 py-2"
+                        className="h-12 w-full overflow-hidden rounded-xl border border-gray-200 bg-white px-3"
                       />
 
                     </div>
 
                   </div>
 
-                  {/* =================================================
-                      BILLING COUNTRY
-                  ================================================= */}
+                  {/* COUNTRY */}
 
                   <div className="mt-4">
 
@@ -2877,9 +2755,7 @@ export default function HomePage() {
 
                   </div>
 
-                  {/* =================================================
-                      BILLING POSTAL CODE
-                  ================================================= */}
+                  {/* POSTAL CODE */}
 
                   <div className="mt-4">
 
@@ -2914,9 +2790,7 @@ export default function HomePage() {
 
                 </div>
 
-                {/* =================================================
-                    MESSAGE
-                ================================================= */}
+                {/* PAYMENT MESSAGE */}
 
                 {paymentMessage && (
                   <div
@@ -2932,17 +2806,13 @@ export default function HomePage() {
                   </div>
                 )}
 
-                {/* EXTRA SPACE BEFORE FOOTER */}
-
                 <div className="h-4 sm:h-5" />
 
               </div>
 
             </div>
 
-            {/* =================================================
-                FIXED CHECKOUT FOOTER
-            ================================================= */}
+            {/* FOOTER */}
 
             <div className="shrink-0 border-t border-gray-200 bg-white p-4 shadow-[0_-8px_20px_rgba(0,0,0,0.06)] sm:p-5">
 

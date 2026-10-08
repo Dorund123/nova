@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
-const PAYPAL_API = "https://api-m.sandbox.paypal.com";
+const PAYPAL_API =
+  "https://api-m.sandbox.paypal.com";
 
 /*
 =========================================================
@@ -51,6 +53,273 @@ const PACKAGES: Record<
 
 /*
 =========================================================
+PAYPAL ERROR MESSAGE
+=========================================================
+*/
+
+function getPayPalPaymentError(
+  data: any
+) {
+  const issue =
+    data?.details?.[0]?.issue ||
+    data?.issue ||
+    data?.name ||
+    "";
+
+  const description =
+    data?.details?.[0]?.description ||
+    data?.message ||
+    "";
+
+  const capture =
+    data?.purchase_units?.[0]
+      ?.payments?.captures?.[0];
+
+  const captureStatus =
+    capture?.status;
+
+  const statusReason =
+    capture?.status_details?.reason;
+
+  const processorCode =
+    capture?.processor_response
+      ?.response_code;
+
+  const paymentAdviceCode =
+    capture?.payment_advice_code;
+
+  const allText = [
+    issue,
+    description,
+    statusReason,
+    processorCode,
+    paymentAdviceCode,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  /*
+  =======================================================
+  INSUFFICIENT FUNDS
+  =======================================================
+  */
+
+  if (
+    allText.includes(
+      "insufficient_funds"
+    ) ||
+    allText.includes(
+      "insufficient funds"
+    ) ||
+    allText.includes(
+      "ccreject-if"
+    )
+  ) {
+    return {
+      code: "INSUFFICIENT_FUNDS",
+      message:
+        "Payment declined because the card does not have enough funds.",
+    };
+  }
+
+  /*
+  =======================================================
+  INSTRUMENT DECLINED
+  =======================================================
+  */
+
+  if (
+    issue ===
+      "INSTRUMENT_DECLINED" ||
+    allText.includes(
+      "instrument_declined"
+    )
+  ) {
+    return {
+      code: "INSTRUMENT_DECLINED",
+      message:
+        "Payment was declined. Please check your card or use another card.",
+    };
+  }
+
+  /*
+  =======================================================
+  GENERIC DECLINE
+  =======================================================
+  */
+
+  if (
+    allText.includes(
+      "generic_decline"
+    ) ||
+    allText.includes(
+      "card was declined"
+    ) ||
+    allText.includes(
+      "transaction refused"
+    ) ||
+    allText.includes(
+      "transaction_refused"
+    )
+  ) {
+    return {
+      code: "CARD_DECLINED",
+      message:
+        "Payment was declined by your card issuer. Please use another card.",
+    };
+  }
+
+  /*
+  =======================================================
+  EXPIRED CARD
+  =======================================================
+  */
+
+  if (
+    allText.includes(
+      "card_expired"
+    ) ||
+    allText.includes(
+      "expired"
+    )
+  ) {
+    return {
+      code: "CARD_EXPIRED",
+      message:
+        "Payment failed because the card is expired.",
+    };
+  }
+
+  /*
+  =======================================================
+  INVALID CARD
+  =======================================================
+  */
+
+  if (
+    allText.includes(
+      "invalid_or_restricted_card"
+    ) ||
+    allText.includes(
+      "invalid card"
+    ) ||
+    allText.includes(
+      "invalid account"
+    )
+  ) {
+    return {
+      code: "INVALID_CARD",
+      message:
+        "Payment failed because the card is invalid or restricted.",
+    };
+  }
+
+  /*
+  =======================================================
+  CVV
+  =======================================================
+  */
+
+  if (
+    allText.includes(
+      "cvv"
+    ) ||
+    allText.includes(
+      "cvc"
+    ) ||
+    allText.includes(
+      "security code"
+    ) ||
+    allText.includes(
+      "cvv2"
+    )
+  ) {
+    return {
+      code: "INVALID_CVV",
+      message:
+        "Payment failed because the card security code is incorrect.",
+    };
+  }
+
+  /*
+  =======================================================
+  BILLING ADDRESS
+  =======================================================
+  */
+
+  if (
+    allText.includes(
+      "billing"
+    ) &&
+    allText.includes(
+      "address"
+    )
+  ) {
+    return {
+      code: "BILLING_ADDRESS",
+      message:
+        "Payment failed because the billing address could not be verified.",
+    };
+  }
+
+  /*
+  =======================================================
+  PAYER CANNOT PAY
+  =======================================================
+  */
+
+  if (
+    allText.includes(
+      "payer_cannot_pay"
+    )
+  ) {
+    return {
+      code: "PAYER_CANNOT_PAY",
+      message:
+        "This payment method cannot complete the purchase.",
+    };
+  }
+
+  /*
+  =======================================================
+  PAYER ACCOUNT
+  =======================================================
+  */
+
+  if (
+    allText.includes(
+      "payer_account_locked"
+    ) ||
+    allText.includes(
+      "payer_account_restricted"
+    )
+  ) {
+    return {
+      code: "PAYER_ACCOUNT",
+      message:
+        "This PayPal account cannot complete the payment.",
+    };
+  }
+
+  /*
+  =======================================================
+  FALLBACK
+  =======================================================
+  */
+
+  return {
+    code:
+      issue ||
+      "PAYMENT_FAILED",
+
+    message:
+      "Payment could not be completed. No Novux was added.",
+  };
+}
+
+/*
+=========================================================
 GET PAYPAL ACCESS TOKEN
 =========================================================
 */
@@ -62,7 +331,10 @@ async function getPayPalAccessToken() {
   const clientSecret =
     process.env.PAYPAL_CLIENT_SECRET?.trim();
 
-  if (!clientId || !clientSecret) {
+  if (
+    !clientId ||
+    !clientSecret
+  ) {
     console.error(
       "PayPal credentials are missing."
     );
@@ -76,23 +348,29 @@ async function getPayPalAccessToken() {
     `${clientId}:${clientSecret}`
   ).toString("base64");
 
-  const response = await fetch(
-    `${PAYPAL_API}/v1/oauth2/token`,
-    {
-      method: "POST",
+  const response =
+    await fetch(
+      `${PAYPAL_API}/v1/oauth2/token`,
+      {
+        method: "POST",
 
-      headers: {
-        Authorization: `Basic ${auth}`,
-        "Content-Type":
-          "application/x-www-form-urlencoded",
-        Accept: "application/json",
-      },
+        headers: {
+          Authorization:
+            `Basic ${auth}`,
 
-      body: "grant_type=client_credentials",
+          "Content-Type":
+            "application/x-www-form-urlencoded",
 
-      cache: "no-store",
-    }
-  );
+          Accept:
+            "application/json",
+        },
+
+        body:
+          "grant_type=client_credentials",
+
+        cache: "no-store",
+      }
+    );
 
   const text =
     await response.text();
@@ -120,11 +398,14 @@ async function getPayPalAccessToken() {
 
     throw new Error(
       data?.error_description ||
+        data?.error ||
         "Could not get PayPal access token."
     );
   }
 
-  if (!data?.access_token) {
+  if (
+    !data?.access_token
+  ) {
     throw new Error(
       "PayPal access token was not returned."
     );
@@ -162,6 +443,7 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
+
           error:
             "You must be logged in.",
         },
@@ -173,20 +455,41 @@ export async function POST(
 
     const supabaseAccessToken =
       authorization
-        .replace("Bearer ", "")
+        .replace(
+          "Bearer ",
+          ""
+        )
         .trim();
+
+    if (
+      !supabaseAccessToken
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+
+          error:
+            "Your login session is invalid.",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
 
     /*
     =====================================================
-    2. SUPABASE
+    2. SUPABASE ENVIRONMENT
     =====================================================
     */
 
     const supabaseUrl =
-      process.env.NEXT_PUBLIC_SUPABASE_URL;
+      process.env
+        .NEXT_PUBLIC_SUPABASE_URL;
 
     const supabaseKey =
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env
+        .NEXT_PUBLIC_SUPABASE_ANON_KEY ||
       process.env
         .NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
@@ -201,6 +504,7 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
+
           error:
             "Supabase environment variables are missing.",
         },
@@ -210,15 +514,29 @@ export async function POST(
       );
     }
 
+    /*
+    =====================================================
+    3. CREATE USER-AUTHENTICATED SUPABASE CLIENT
+    =====================================================
+    */
+
     const supabase =
       createClient(
         supabaseUrl,
-        supabaseKey
+        supabaseKey,
+        {
+          global: {
+            headers: {
+              Authorization:
+                `Bearer ${supabaseAccessToken}`,
+            },
+          },
+        }
       );
 
     /*
     =====================================================
-    3. GET CURRENT USER
+    4. GET CURRENT USER
     =====================================================
     */
 
@@ -244,6 +562,7 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
+
           error:
             "Your login session is invalid.",
         },
@@ -255,23 +574,41 @@ export async function POST(
 
     /*
     =====================================================
-    4. READ REQUEST
+    5. READ REQUEST
     =====================================================
     */
 
-    const body =
-      await request.json();
+    let body: any = null;
+
+    try {
+      body =
+        await request.json();
+    } catch {
+      return NextResponse.json(
+        {
+          success: false,
+
+          error:
+            "Invalid request body.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
 
     const orderID =
       body?.orderID;
 
     if (
       !orderID ||
-      typeof orderID !== "string"
+      typeof orderID !==
+        "string"
     ) {
       return NextResponse.json(
         {
           success: false,
+
           error:
             "PayPal order ID is required.",
         },
@@ -305,7 +642,7 @@ export async function POST(
 
     /*
     =====================================================
-    5. GET PAYPAL ACCESS TOKEN
+    6. GET PAYPAL ACCESS TOKEN
     =====================================================
     */
 
@@ -314,7 +651,7 @@ export async function POST(
 
     /*
     =====================================================
-    6. GET PAYPAL ORDER
+    7. GET PAYPAL ORDER
     =====================================================
     */
 
@@ -352,12 +689,16 @@ export async function POST(
     } catch {
       console.error(
         "PayPal order response was not JSON:",
-        orderText.slice(0, 1000)
+        orderText.slice(
+          0,
+          1000
+        )
       );
 
       return NextResponse.json(
         {
           success: false,
+
           error:
             "PayPal returned an invalid order response.",
         },
@@ -378,6 +719,7 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
+
           error:
             "Could not find the PayPal order.",
         },
@@ -389,7 +731,48 @@ export async function POST(
 
     /*
     =====================================================
-    7. READ PURCHASE UNIT
+    8. ORDER STATUS
+    =====================================================
+    */
+
+    console.log(
+      "PayPal order status:",
+      orderData?.status
+    );
+
+    /*
+    =====================================================
+    IMPORTANT:
+    If already COMPLETED, don't add Novux again.
+    =====================================================
+    */
+
+    if (
+      orderData?.status ===
+      "COMPLETED"
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+
+          captureStatus:
+            "COMPLETED",
+
+          status:
+            "COMPLETED",
+
+          error:
+            "This PayPal order has already been completed. Novux were not added again.",
+        },
+        {
+          status: 409,
+        }
+      );
+    }
+
+    /*
+    =====================================================
+    9. GET PURCHASE UNIT
     =====================================================
     */
 
@@ -405,6 +788,7 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
+
           error:
             "PayPal order information is missing.",
         },
@@ -416,21 +800,8 @@ export async function POST(
 
     /*
     =====================================================
-    8. READ PACKAGE IDENTIFIERS
+    10. PACKAGE IDENTIFIERS
     =====================================================
-
-    We support BOTH:
-
-    custom_id:
-      novux_300
-
-    AND:
-
-    reference_id:
-      nova-novux-300
-
-    This makes the route compatible with
-    the order created by our create-order route.
     */
 
     const customId =
@@ -451,21 +822,23 @@ export async function POST(
 
     /*
     =====================================================
-    9. FIND NOVUX AMOUNT
+    11. FIND NOVUX AMOUNT
     =====================================================
     */
 
-    let novuxAmount: number | null =
-      null;
+    let novuxAmount:
+      | number
+      | null = null;
 
     /*
-    -----------------------------------------
-    OPTION A: custom_id
-    -----------------------------------------
+    -----------------------------------------------------
+    CUSTOM ID
+    -----------------------------------------------------
     */
 
     if (
-      typeof customId === "string" &&
+      typeof customId ===
+        "string" &&
       customId.startsWith(
         "novux_"
       )
@@ -479,20 +852,24 @@ export async function POST(
         );
 
       if (
-        Number.isFinite(value)
+        Number.isFinite(
+          value
+        )
       ) {
-        novuxAmount = value;
+        novuxAmount =
+          value;
       }
     }
 
     /*
-    -----------------------------------------
-    OPTION B: reference_id
-    -----------------------------------------
+    -----------------------------------------------------
+    REFERENCE ID
+    -----------------------------------------------------
     */
 
     if (
-      novuxAmount === null &&
+      novuxAmount ===
+        null &&
       typeof referenceId ===
         "string" &&
       referenceId.startsWith(
@@ -508,38 +885,33 @@ export async function POST(
         );
 
       if (
-        Number.isFinite(value)
+        Number.isFinite(
+          value
+        )
       ) {
-        novuxAmount = value;
+        novuxAmount =
+          value;
       }
     }
 
     /*
     =====================================================
-    10. PACKAGE NOT FOUND
+    12. PACKAGE NOT FOUND
     =====================================================
     */
 
     if (
-      novuxAmount === null
+      novuxAmount ===
+      null
     ) {
       console.error(
         "Could not determine Novux package."
       );
 
-      console.error(
-        "custom_id:",
-        customId
-      );
-
-      console.error(
-        "reference_id:",
-        referenceId
-      );
-
       return NextResponse.json(
         {
           success: false,
+
           error:
             "Invalid Novux package.",
         },
@@ -551,13 +923,15 @@ export async function POST(
 
     /*
     =====================================================
-    11. VERIFY PACKAGE
+    13. VERIFY PACKAGE
     =====================================================
     */
 
     const packageData =
       PACKAGES[
-        String(novuxAmount)
+        String(
+          novuxAmount
+        )
       ];
 
     if (!packageData) {
@@ -569,6 +943,7 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
+
           error:
             "Invalid Novux package.",
         },
@@ -590,7 +965,7 @@ export async function POST(
 
     /*
     =====================================================
-    12. VERIFY ORDER AMOUNT
+    14. VERIFY ORDER AMOUNT
     =====================================================
     */
 
@@ -634,6 +1009,7 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
+
           error:
             "Invalid payment amount.",
         },
@@ -645,7 +1021,7 @@ export async function POST(
 
     /*
     =====================================================
-    13. VERIFY CURRENCY
+    15. VERIFY CURRENCY
     =====================================================
     */
 
@@ -661,6 +1037,7 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
+
           error:
             "Invalid payment currency.",
         },
@@ -672,34 +1049,7 @@ export async function POST(
 
     /*
     =====================================================
-    14. CHECK ORDER STATUS
-    =====================================================
-    */
-
-    console.log(
-      "PayPal order status:",
-      orderData?.status
-    );
-
-    if (
-      orderData?.status ===
-      "COMPLETED"
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "This PayPal order has already been completed.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    /*
-    =====================================================
-    15. CAPTURE PAYPAL ORDER
+    16. CAPTURE PAYPAL ORDER
     =====================================================
     */
 
@@ -725,6 +1075,12 @@ export async function POST(
             "Content-Type":
               "application/json",
 
+            /*
+            -------------------------------------------------
+            PayPal idempotency key
+            -------------------------------------------------
+            */
+
             "PayPal-Request-Id":
               `capture-${orderID}`,
           },
@@ -749,13 +1105,14 @@ export async function POST(
         "PayPal capture response was not JSON:",
         captureText.slice(
           0,
-          1000
+          1500
         )
       );
 
       return NextResponse.json(
         {
           success: false,
+
           error:
             "PayPal returned an invalid capture response.",
         },
@@ -765,9 +1122,14 @@ export async function POST(
       );
     }
 
+    console.log(
+      "PayPal capture response:",
+      captureData
+    );
+
     /*
     =====================================================
-    16. PAYPAL CAPTURE ERROR
+    17. HANDLE PAYPAL HTTP ERRORS
     =====================================================
     */
 
@@ -775,76 +1137,153 @@ export async function POST(
       !captureResponse.ok
     ) {
       console.error(
-        "PayPal capture error:",
+        "PayPal capture HTTP error:",
         captureData
       );
 
+      const paymentError =
+        getPayPalPaymentError(
+          captureData
+        );
+
       return NextResponse.json(
         {
           success: false,
+
+          captureStatus:
+            captureData?.status ||
+            null,
+
+          status:
+            captureData?.status ||
+            null,
+
+          paypalIssue:
+            paymentError.code,
+
           error:
-            captureData?.details?.[0]
-              ?.description ||
+            paymentError.message,
+
+          paypalMessage:
             captureData?.message ||
-            "PayPal could not capture this payment.",
+            null,
+
+          details:
+            captureData?.details ||
+            null,
         },
         {
-          status: 400,
+          status:
+            captureResponse.status >=
+            400 &&
+            captureResponse.status <
+            500
+              ? 400
+              : 502,
         }
       );
     }
 
     /*
     =====================================================
-    17. PAYMENT MUST BE COMPLETED
+    18. TOP-LEVEL CAPTURE STATUS
     =====================================================
     */
 
-    if (
-      captureData?.status !==
-      "COMPLETED"
-    ) {
-      console.error(
-        "Payment not completed:",
-        captureData?.status
-      );
+    const topLevelStatus =
+      captureData?.status;
 
-      return NextResponse.json(
-        {
-          success: false,
-
-          error:
-            "Payment was not completed.",
-
-          status:
-            captureData?.status,
-        },
-        {
-          status: 400,
-        }
-      );
-    }
+    console.log(
+      "PayPal top-level status:",
+      topLevelStatus
+    );
 
     /*
     =====================================================
-    18. GET CAPTURE INFORMATION
+    19. FIND CAPTURE
     =====================================================
     */
 
     const capturedPurchaseUnit =
-      captureData?.purchase_units?.[0];
+      captureData
+        ?.purchase_units?.[0];
 
-    const capture =
+    const captures =
       capturedPurchaseUnit
         ?.payments
-        ?.captures?.[0];
+        ?.captures || [];
 
-    const paidAmount =
-      capture?.amount?.value;
+    const capture =
+      captures?.[0];
 
-    const paidCurrency =
-      capture?.amount
-        ?.currency_code;
+    const captureStatus =
+      capture?.status ||
+      topLevelStatus ||
+      null;
+
+    console.log(
+      "Actual payment capture status:",
+      captureStatus
+    );
+
+    /*
+    =====================================================
+    20. IF CAPTURE IS NOT COMPLETED
+    =====================================================
+    */
+
+    if (
+      captureStatus !==
+      "COMPLETED"
+    ) {
+      console.error(
+        "Payment was not completed:",
+        {
+          orderID,
+
+          topLevelStatus,
+
+          captureStatus,
+
+          capture,
+        }
+      );
+
+      const paymentError =
+        getPayPalPaymentError(
+          captureData
+        );
+
+      return NextResponse.json(
+        {
+          success: false,
+
+          captureStatus,
+
+          status:
+            topLevelStatus,
+
+          paypalIssue:
+            paymentError.code,
+
+          error:
+            paymentError.message,
+
+          details:
+            captureData?.details ||
+            null,
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    /*
+    =====================================================
+    21. CAPTURE ID
+    =====================================================
+    */
 
     const captureID =
       capture?.id;
@@ -858,8 +1297,12 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
+
+          captureStatus:
+            "COMPLETED",
+
           error:
-            "PayPal capture ID is missing.",
+            "PayPal completed the payment, but the capture ID was missing. No Novux were added.",
         },
         {
           status: 500,
@@ -869,9 +1312,26 @@ export async function POST(
 
     /*
     =====================================================
-    19. VERIFY CAPTURE AMOUNT
+    22. VERIFY CAPTURE AMOUNT
     =====================================================
     */
+
+    const paidAmount =
+      capture?.amount?.value;
+
+    const paidCurrency =
+      capture?.amount
+        ?.currency_code;
+
+    console.log(
+      "Captured amount:",
+      paidAmount
+    );
+
+    console.log(
+      "Captured currency:",
+      paidCurrency
+    );
 
     if (
       paidAmount !==
@@ -887,14 +1347,20 @@ export async function POST(
             paidAmount,
 
           orderID,
+
+          captureID,
         }
       );
 
       return NextResponse.json(
         {
           success: false,
+
+          captureStatus:
+            "COMPLETED",
+
           error:
-            "Invalid payment amount.",
+            "The captured payment amount does not match the Novux package. No Novux were added.",
         },
         {
           status: 400,
@@ -904,7 +1370,7 @@ export async function POST(
 
     /*
     =====================================================
-    20. VERIFY CAPTURE CURRENCY
+    23. VERIFY CAPTURE CURRENCY
     =====================================================
     */
 
@@ -920,8 +1386,12 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
+
+          captureStatus:
+            "COMPLETED",
+
           error:
-            "Invalid payment currency.",
+            "The captured payment currency is invalid. No Novux were added.",
         },
         {
           status: 400,
@@ -931,7 +1401,7 @@ export async function POST(
 
     /*
     =====================================================
-    21. GET PROFILE
+    24. GET USER PROFILE
     =====================================================
     */
 
@@ -962,8 +1432,14 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
+
+          captureStatus:
+            "COMPLETED",
+
+          captureID,
+
           error:
-            "Could not load your Nova profile.",
+            "Payment succeeded, but your Nova profile could not be loaded. No Novux were added.",
         },
         {
           status: 500,
@@ -973,18 +1449,48 @@ export async function POST(
 
     /*
     =====================================================
-    22. CURRENT BALANCE
+    25. READ CURRENT BALANCE
     =====================================================
     */
 
     const currentBalance =
       Number(
-        profile.novux_balance ?? 0
+        profile.novux_balance ??
+          0
       );
+
+    if (
+      !Number.isFinite(
+        currentBalance
+      ) ||
+      currentBalance < 0
+    ) {
+      console.error(
+        "Invalid current Novux balance:",
+        currentBalance
+      );
+
+      return NextResponse.json(
+        {
+          success: false,
+
+          captureStatus:
+            "COMPLETED",
+
+          captureID,
+
+          error:
+            "Your Nova balance is invalid. No Novux were added.",
+        },
+        {
+          status: 500,
+        }
+      );
+    }
 
     /*
     =====================================================
-    23. ADD NOVUX
+    26. CALCULATE NEW BALANCE
     =====================================================
     */
 
@@ -992,7 +1498,36 @@ export async function POST(
       currentBalance +
       packageData.novux;
 
+    console.log(
+      "Current balance:",
+      currentBalance
+    );
+
+    console.log(
+      "Novux to add:",
+      packageData.novux
+    );
+
+    console.log(
+      "New balance:",
+      newBalance
+    );
+
+    /*
+    =====================================================
+    27. UPDATE BALANCE
+    =====================================================
+
+    IMPORTANT:
+    We also match the OLD balance.
+
+    This protects against two simultaneous requests
+    trying to add the same purchase at the same time.
+    =====================================================
+    */
+
     const {
+      data: updatedProfile,
       error: updateError,
     } =
       await supabase
@@ -1004,7 +1539,15 @@ export async function POST(
         .eq(
           "id",
           user.id
-        );
+        )
+        .eq(
+          "novux_balance",
+          currentBalance
+        )
+        .select(
+          "novux_balance"
+        )
+        .maybeSingle();
 
     if (updateError) {
       console.error(
@@ -1015,8 +1558,14 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
+
+          captureStatus:
+            "COMPLETED",
+
+          captureID,
+
           error:
-            "Payment succeeded, but Novux could not be added.",
+            "Payment succeeded, but Nova could not update your balance. No Novux were added.",
         },
         {
           status: 500,
@@ -1026,7 +1575,94 @@ export async function POST(
 
     /*
     =====================================================
-    24. SUCCESS
+    28. UPDATE MUST AFFECT PROFILE
+    =====================================================
+    */
+
+    if (
+      !updatedProfile
+    ) {
+      console.error(
+        "Balance update affected zero rows.",
+        {
+          userID: user.id,
+
+          currentBalance,
+
+          newBalance,
+
+          captureID,
+        }
+      );
+
+      return NextResponse.json(
+        {
+          success: false,
+
+          captureStatus:
+            "COMPLETED",
+
+          captureID,
+
+          error:
+            "Payment succeeded, but Nova could not safely update your balance. No additional Novux were added.",
+        },
+        {
+          status: 409,
+        }
+      );
+    }
+
+    /*
+    =====================================================
+    29. VERIFY UPDATED BALANCE
+    =====================================================
+    */
+
+    const finalBalance =
+      Number(
+        updatedProfile
+          .novux_balance
+      );
+
+    if (
+      finalBalance !==
+      newBalance
+    ) {
+      console.error(
+        "Unexpected final balance:",
+        {
+          expected:
+            newBalance,
+
+          received:
+            finalBalance,
+
+          captureID,
+        }
+      );
+
+      return NextResponse.json(
+        {
+          success: false,
+
+          captureStatus:
+            "COMPLETED",
+
+          captureID,
+
+          error:
+            "Payment succeeded, but the final balance could not be verified.",
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
+    /*
+    =====================================================
+    30. SUCCESS
     =====================================================
     */
 
@@ -1070,6 +1706,11 @@ export async function POST(
     );
 
     console.log(
+      "Capture status:",
+      captureStatus
+    );
+
+    console.log(
       "Added Novux:",
       packageData.novux
     );
@@ -1081,7 +1722,7 @@ export async function POST(
 
     console.log(
       "New balance:",
-      newBalance
+      finalBalance
     );
 
     console.log(
@@ -1090,29 +1731,46 @@ export async function POST(
 
     /*
     =====================================================
-    25. RETURN SUCCESS
+    31. RETURN SUCCESS
     =====================================================
     */
 
-    return NextResponse.json({
-      success: true,
+    return NextResponse.json(
+      {
+        success: true,
 
-      orderID,
+        orderID,
 
-      captureID,
+        captureID,
 
-      status:
-        captureData.status,
+        status:
+          topLevelStatus,
 
-      paidAmount,
+        captureStatus:
+          captureStatus,
 
-      paidCurrency,
+        paidAmount,
 
-      addedNovux:
-        packageData.novux,
+        paidCurrency,
 
-      newBalance,
-    });
+        addedNovux:
+          packageData.novux,
+
+        previousBalance:
+          currentBalance,
+
+        newBalance:
+          finalBalance,
+      },
+      {
+        status: 200,
+
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
+      }
+    );
   } catch (error) {
     console.error(
       "Capture PayPal order error:",
