@@ -23,11 +23,285 @@ type NovuxPackageData = {
   label: string;
 };
 
+/*
+=========================================================
+BILLING COUNTRY LIST
+=========================================================
+*/
+
+const COUNTRY_CODES = [
+  "AF",
+  "AX",
+  "AL",
+  "DZ",
+  "AS",
+  "AD",
+  "AO",
+  "AI",
+  "AQ",
+  "AG",
+  "AR",
+  "AM",
+  "AW",
+  "AU",
+  "AT",
+  "AZ",
+  "BS",
+  "BH",
+  "BD",
+  "BB",
+  "BY",
+  "BE",
+  "BZ",
+  "BJ",
+  "BM",
+  "BT",
+  "BO",
+  "BQ",
+  "BA",
+  "BW",
+  "BV",
+  "BR",
+  "IO",
+  "BN",
+  "BG",
+  "BF",
+  "BI",
+  "CV",
+  "KH",
+  "CM",
+  "CA",
+  "KY",
+  "CF",
+  "TD",
+  "CL",
+  "CN",
+  "CX",
+  "CC",
+  "CO",
+  "KM",
+  "CG",
+  "CD",
+  "CK",
+  "CR",
+  "CI",
+  "HR",
+  "CU",
+  "CW",
+  "CY",
+  "CZ",
+  "DK",
+  "DJ",
+  "DM",
+  "DO",
+  "EC",
+  "EG",
+  "SV",
+  "GQ",
+  "ER",
+  "EE",
+  "SZ",
+  "ET",
+  "FK",
+  "FO",
+  "FJ",
+  "FI",
+  "FR",
+  "GF",
+  "PF",
+  "TF",
+  "GA",
+  "GM",
+  "GE",
+  "DE",
+  "GH",
+  "GI",
+  "GR",
+  "GL",
+  "GD",
+  "GP",
+  "GU",
+  "GT",
+  "GG",
+  "GN",
+  "GW",
+  "GY",
+  "HT",
+  "HM",
+  "VA",
+  "HN",
+  "HK",
+  "HU",
+  "IS",
+  "IN",
+  "ID",
+  "IR",
+  "IQ",
+  "IE",
+  "IM",
+  "IL",
+  "IT",
+  "JM",
+  "JP",
+  "JE",
+  "JO",
+  "KZ",
+  "KE",
+  "KI",
+  "KP",
+  "KR",
+  "KW",
+  "KG",
+  "LA",
+  "LV",
+  "LB",
+  "LS",
+  "LR",
+  "LY",
+  "LI",
+  "LT",
+  "LU",
+  "MO",
+  "MG",
+  "MW",
+  "MY",
+  "MV",
+  "ML",
+  "MT",
+  "MH",
+  "MQ",
+  "MR",
+  "MU",
+  "YT",
+  "MX",
+  "FM",
+  "MD",
+  "MC",
+  "MN",
+  "ME",
+  "MS",
+  "MA",
+  "MZ",
+  "MM",
+  "NA",
+  "NR",
+  "NP",
+  "NL",
+  "NC",
+  "NZ",
+  "NI",
+  "NE",
+  "NG",
+  "NU",
+  "NF",
+  "MK",
+  "MP",
+  "NO",
+  "OM",
+  "PK",
+  "PW",
+  "PS",
+  "PA",
+  "PG",
+  "PY",
+  "PE",
+  "PH",
+  "PN",
+  "PL",
+  "PT",
+  "PR",
+  "QA",
+  "RE",
+  "RO",
+  "RU",
+  "RW",
+  "BL",
+  "SH",
+  "KN",
+  "LC",
+  "MF",
+  "PM",
+  "VC",
+  "WS",
+  "SM",
+  "ST",
+  "SA",
+  "SN",
+  "RS",
+  "SC",
+  "SL",
+  "SG",
+  "SX",
+  "SK",
+  "SI",
+  "SB",
+  "SO",
+  "ZA",
+  "GS",
+  "SS",
+  "ES",
+  "LK",
+  "SD",
+  "SR",
+  "SJ",
+  "SE",
+  "CH",
+  "SY",
+  "TW",
+  "TJ",
+  "TZ",
+  "TH",
+  "TL",
+  "TG",
+  "TK",
+  "TO",
+  "TT",
+  "TN",
+  "TR",
+  "TM",
+  "TC",
+  "TV",
+  "UG",
+  "UA",
+  "AE",
+  "GB",
+  "US",
+  "UM",
+  "UY",
+  "UZ",
+  "VU",
+  "VE",
+  "VN",
+  "VG",
+  "VI",
+  "WF",
+  "EH",
+  "YE",
+  "ZM",
+  "ZW",
+] as const;
+
+const COUNTRY_OPTIONS = COUNTRY_CODES.map(
+  (code) => ({
+    code,
+    name:
+      new Intl.DisplayNames(
+        ["en"],
+        { type: "region" }
+      ).of(code) || code,
+  })
+).sort((a, b) =>
+  a.name.localeCompare(b.name)
+);
+
 export default function HomePage() {
   const router = useRouter();
 
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [search, setSearch] = useState("");
+  const [profile, setProfile] =
+    useState<Profile | null>(null);
+
+  const [search, setSearch] =
+    useState("");
 
   const [showUsernameEditor, setShowUsernameEditor] =
     useState(false);
@@ -723,6 +997,10 @@ export default function HomePage() {
                     setCardFieldsReady(
                       false
                     );
+
+                    setBillingPostalCode("");
+
+                    setBillingCountryCode("GE");
                   }, 2500);
                 }
               } catch (error) {
@@ -1117,14 +1395,6 @@ export default function HomePage() {
       =====================================================
       2. SUBMIT CARD PAYMENT
       =====================================================
-
-      IMPORTANT:
-
-      PayPal v6 allows billingAddress to be passed
-      to cardSession.submit().
-
-      This is used by PayPal for risk/SCA processing.
-      =====================================================
       */
 
       console.log(
@@ -1331,18 +1601,14 @@ export default function HomePage() {
         setCardFieldsReady(false);
 
         setBillingPostalCode("");
+
+        setBillingCountryCode("GE");
       }, 2500);
     } catch (error) {
       console.error(
         "Card payment error:",
         error
       );
-
-      /*
-      =====================================================
-      SHOW COMPLETE PAYPAL ERROR
-      =====================================================
-      */
 
       let errorMessage =
         "Card payment failed.";
@@ -1391,6 +1657,8 @@ export default function HomePage() {
       label: `${amount.toLocaleString()} Novux`,
     };
 
+    setShowNovuxShop(false);
+
     setSelectedPackage(pkg);
 
     setPaymentMessage("");
@@ -1407,6 +1675,31 @@ export default function HomePage() {
     setTimeout(() => {
       setupCardFields(pkg);
     }, 700);
+  }
+
+  /*
+  =========================================================
+  CLOSE PAYMENT MODAL
+  =========================================================
+  */
+
+  function closePaymentModal() {
+    if (paymentLoading) {
+      return;
+    }
+
+    setSelectedPackage(null);
+
+    paypalCardSessionRef.current =
+      null;
+
+    setCardFieldsReady(false);
+
+    setPaymentMessage("");
+
+    setBillingPostalCode("");
+
+    setBillingCountryCode("GE");
   }
 
   /*
@@ -1428,7 +1721,9 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-[#f3f3f3] text-[#191919]">
 
-      {/* TOP NAVBAR */}
+      {/* =====================================================
+          TOP NAVBAR
+      ===================================================== */}
 
       <header className="sticky top-0 z-50 h-16 border-b border-gray-200 bg-white">
         <div className="flex h-full items-center px-4">
@@ -1525,11 +1820,15 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* LAYOUT */}
+      {/* =====================================================
+          LAYOUT
+      ===================================================== */}
 
       <div className="mx-auto flex max-w-[1500px]">
 
-        {/* SIDEBAR */}
+        {/* ===================================================
+            SIDEBAR
+        =================================================== */}
 
         <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 shrink-0 border-r border-gray-200 bg-white p-4 lg:block">
 
@@ -1642,7 +1941,9 @@ export default function HomePage() {
 
         </aside>
 
-        {/* MAIN CONTENT */}
+        {/* ===================================================
+            MAIN CONTENT
+        =================================================== */}
 
         <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
 
@@ -1669,7 +1970,9 @@ export default function HomePage() {
 
           </div>
 
-          {/* WELCOME */}
+          {/* =================================================
+              WELCOME
+          ================================================= */}
 
           {profile && (
             <section className="mb-8">
@@ -1776,7 +2079,9 @@ export default function HomePage() {
             </section>
           )}
 
-          {/* NOVA STATS */}
+          {/* =================================================
+              NOVA STATS
+          ================================================= */}
 
           <section className="mb-8">
 
@@ -1807,7 +2112,9 @@ export default function HomePage() {
 
           </section>
 
-          {/* NOVA UPGRADER */}
+          {/* =================================================
+              NOVA UPGRADER
+          ================================================= */}
 
           <section className="mb-12">
 
@@ -1955,7 +2262,9 @@ export default function HomePage() {
 
           </section>
 
-          {/* CONTINUE PLAYING */}
+          {/* =================================================
+              CONTINUE PLAYING
+          ================================================= */}
 
           <GameSection
             title="Continue Playing"
@@ -2000,7 +2309,9 @@ export default function HomePage() {
 
           </GameSection>
 
-          {/* POPULAR */}
+          {/* =================================================
+              POPULAR
+          ================================================= */}
 
           <GameSection
             title="Popular on Nova"
@@ -2045,7 +2356,9 @@ export default function HomePage() {
 
           </GameSection>
 
-          {/* CATEGORIES */}
+          {/* =================================================
+              CATEGORIES
+          ================================================= */}
 
           <section className="mt-12">
 
@@ -2099,7 +2412,9 @@ export default function HomePage() {
 
           </section>
 
-          {/* CREATE */}
+          {/* =================================================
+              CREATE
+          ================================================= */}
 
           <section className="mt-12 mb-10">
 
@@ -2205,7 +2520,8 @@ export default function HomePage() {
                   </p>
 
                   <p className="text-xl font-black">
-                    {profile?.novux_balance.toLocaleString()} Novux
+                    {profile?.novux_balance.toLocaleString()}{" "}
+                    Novux
                   </p>
 
                 </div>
@@ -2322,19 +2638,10 @@ export default function HomePage() {
 
       {selectedPackage && (
         <div
-          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-3 backdrop-blur-sm sm:p-4"
           onClick={() => {
             if (!paymentLoading) {
-              setSelectedPackage(null);
-
-              paypalCardSessionRef.current =
-                null;
-
-              setCardFieldsReady(false);
-
-              setPaymentMessage("");
-
-              setBillingPostalCode("");
+              closePaymentModal();
             }
           }}
         >
@@ -2343,20 +2650,24 @@ export default function HomePage() {
             onClick={(e) =>
               e.stopPropagation()
             }
-            className="w-full max-w-xl overflow-hidden rounded-3xl bg-white shadow-2xl"
+            className="flex max-h-[calc(100vh-24px)] w-full max-w-xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl sm:max-h-[calc(100vh-40px)]"
           >
 
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
+            {/* =================================================
+                CHECKOUT HEADER
+            ================================================= */}
 
-              <div className="flex items-start justify-between">
+            <div className="shrink-0 bg-gradient-to-r from-blue-600 to-purple-600 p-5 text-white sm:p-6">
 
-                <div>
+              <div className="flex items-start justify-between gap-4">
 
-                  <div className="mb-2 inline-flex rounded-xl bg-white/15 px-3 py-1.5 text-xs font-black">
+                <div className="min-w-0">
+
+                  <div className="mb-2 inline-flex rounded-xl bg-white/15 px-3 py-1.5 text-[10px] font-black tracking-wide">
                     💳 SECURE CHECKOUT
                   </div>
 
-                  <h2 className="text-2xl font-black">
+                  <h2 className="text-xl font-black sm:text-2xl">
                     Buy{" "}
                     {selectedPackage.amount.toLocaleString()}{" "}
                     Novux
@@ -2366,32 +2677,17 @@ export default function HomePage() {
                     Total: $
                     {selectedPackage.price.toFixed(
                       2
-                    )} USD
+                    )}{" "}
+                    USD
                   </p>
 
                 </div>
 
                 <button
-                  disabled={
-                    paymentLoading
-                  }
-                  onClick={() => {
-                    setSelectedPackage(
-                      null
-                    );
-
-                    paypalCardSessionRef.current =
-                      null;
-
-                    setCardFieldsReady(
-                      false
-                    );
-
-                    setPaymentMessage("");
-
-                    setBillingPostalCode("");
-                  }}
-                  className="rounded-xl px-3 py-2 text-xl text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+                  type="button"
+                  disabled={paymentLoading}
+                  onClick={closePaymentModal}
+                  className="shrink-0 rounded-xl px-3 py-2 text-xl text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   ✕
                 </button>
@@ -2400,277 +2696,325 @@ export default function HomePage() {
 
             </div>
 
-            <div className="p-6">
+            {/* =================================================
+                SCROLLABLE CHECKOUT CONTENT
+            ================================================= */}
 
-              {/* PAYPAL */}
+            <div className="min-h-0 flex-1 overflow-y-auto">
 
-              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
+              <div className="p-5 sm:p-6">
 
-                <div className="flex items-center justify-between">
+                {/* =================================================
+                    PAYPAL
+                ================================================= */}
+
+                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
+
+                  <div className="flex items-center justify-between gap-4">
+
+                    <div className="min-w-0">
+
+                      <p className="text-sm font-black text-gray-900">
+                        Pay with PayPal
+                      </p>
+
+                      <p className="mt-1 text-xs text-gray-500">
+                        Pay using your PayPal account.
+                      </p>
+
+                    </div>
+
+                    <div className="shrink-0 text-2xl">
+                      🅿️
+                    </div>
+
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={
+                      paymentLoading ||
+                      !paypalReady
+                    }
+                    onClick={() =>
+                      startPayPalPayment(
+                        selectedPackage
+                      )
+                    }
+                    className="mt-4 w-full rounded-xl bg-[#ffc439] py-3.5 text-sm font-black text-[#003087] transition hover:bg-[#f7b900] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {!paypalReady
+                      ? "Loading PayPal..."
+                      : paymentLoading
+                      ? "Processing..."
+                      : "Continue with PayPal"}
+                  </button>
+
+                </div>
+
+                {/* =================================================
+                    DIVIDER
+                ================================================= */}
+
+                <div className="my-4 flex items-center gap-3 sm:my-5">
+
+                  <div className="h-px flex-1 bg-gray-200" />
+
+                  <span className="shrink-0 text-[10px] font-bold text-gray-400 sm:text-xs">
+                    OR PAY WITH CARD
+                  </span>
+
+                  <div className="h-px flex-1 bg-gray-200" />
+
+                </div>
+
+                {/* =================================================
+                    CARD FIELDS
+                ================================================= */}
+
+                <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
 
                   <div>
 
                     <p className="text-sm font-black text-gray-900">
-                      Pay with PayPal
+                      Credit or Debit Card
                     </p>
 
-                    <p className="mt-1 text-xs text-gray-500">
-                      Pay using your PayPal account.
+                    <p className="mt-1 text-xs leading-5 text-gray-500">
+                      Your card details are securely handled by PayPal.
                     </p>
 
                   </div>
 
-                  <div className="text-2xl">
-                    🅿️
+                  {/* CARD NUMBER */}
+
+                  <div className="mt-4">
+
+                    <label className="mb-2 block text-xs font-bold text-gray-600">
+                      Card Number
+                    </label>
+
+                    <div
+                      id="paypal-card-number"
+                      className="min-h-[48px] rounded-xl border border-gray-200 bg-white px-3 py-2"
+                    />
+
+                  </div>
+
+                  {/* EXPIRY + CVV */}
+
+                  <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4">
+
+                    <div>
+
+                      <label className="mb-2 block text-xs font-bold text-gray-600">
+                        Expiry
+                      </label>
+
+                      <div
+                        id="paypal-card-expiry"
+                        className="min-h-[48px] rounded-xl border border-gray-200 bg-white px-3 py-2"
+                      />
+
+                    </div>
+
+                    <div>
+
+                      <label className="mb-2 block text-xs font-bold text-gray-600">
+                        CVV
+                      </label>
+
+                      <div
+                        id="paypal-card-cvv"
+                        className="min-h-[48px] rounded-xl border border-gray-200 bg-white px-3 py-2"
+                      />
+
+                    </div>
+
+                  </div>
+
+                  {/* =================================================
+                      BILLING COUNTRY
+                  ================================================= */}
+
+                  <div className="mt-4">
+
+                    <label className="mb-2 block text-xs font-bold text-gray-600">
+                      Billing Country
+                    </label>
+
+                    <select
+                      value={
+                        billingCountryCode
+                      }
+                      onChange={(e) =>
+                        setBillingCountryCode(
+                          e.target.value
+                        )
+                      }
+                      disabled={
+                        paymentLoading
+                      }
+                      className="h-12 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+                    >
+
+                      {COUNTRY_OPTIONS.map(
+                        (country) => (
+                          <option
+                            key={
+                              country.code
+                            }
+                            value={
+                              country.code
+                            }
+                          >
+                            {country.name}
+                          </option>
+                        )
+                      )}
+
+                    </select>
+
+                  </div>
+
+                  {/* =================================================
+                      BILLING POSTAL CODE
+                  ================================================= */}
+
+                  <div className="mt-4">
+
+                    <label className="mb-2 block text-xs font-bold text-gray-600">
+                      Billing Postal Code
+                    </label>
+
+                    <input
+                      type="text"
+                      value={
+                        billingPostalCode
+                      }
+                      onChange={(e) =>
+                        setBillingPostalCode(
+                          e.target.value
+                        )
+                      }
+                      disabled={
+                        paymentLoading
+                      }
+                      autoComplete="postal-code"
+                      inputMode="text"
+                      placeholder="Example: 0105"
+                      className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+                    />
+
+                    <p className="mt-1 text-[11px] leading-4 text-gray-400">
+                      Enter the postal code associated with your billing address.
+                    </p>
+
                   </div>
 
                 </div>
 
-                <button
-                  disabled={
-                    paymentLoading ||
-                    !paypalReady
-                  }
-                  onClick={() =>
-                    startPayPalPayment(
-                      selectedPackage
-                    )
-                  }
-                  className="mt-4 w-full rounded-xl bg-[#ffc439] py-3.5 text-sm font-black text-[#003087] transition hover:bg-[#f7b900] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {!paypalReady
-                    ? "Loading PayPal..."
-                    : paymentLoading
-                    ? "Processing..."
-                    : "Continue with PayPal"}
-                </button>
+                {/* =================================================
+                    MESSAGE
+                ================================================= */}
 
-              </div>
-
-              {/* DIVIDER */}
-
-              <div className="my-5 flex items-center gap-3">
-
-                <div className="h-px flex-1 bg-gray-200" />
-
-                <span className="text-xs font-bold text-gray-400">
-                  OR PAY WITH CARD
-                </span>
-
-                <div className="h-px flex-1 bg-gray-200" />
-
-              </div>
-
-              {/* CARD FIELDS */}
-
-              <div className="rounded-2xl border border-gray-200 bg-white p-5">
-
-                <p className="text-sm font-black text-gray-900">
-                  Credit or Debit Card
-                </p>
-
-                <p className="mt-1 text-xs text-gray-500">
-                  Your card details are securely handled by PayPal.
-                </p>
-
-                <div className="mt-5">
-
-                  <label className="mb-2 block text-xs font-bold text-gray-600">
-                    Card Number
-                  </label>
-
+                {paymentMessage && (
                   <div
-                    id="paypal-card-number"
-                    className="min-h-[48px] rounded-xl border border-gray-200 bg-white px-3 py-2"
-                  />
-
-                </div>
-
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-
-                  <div>
-
-                    <label className="mb-2 block text-xs font-bold text-gray-600">
-                      Expiry
-                    </label>
-
-                    <div
-                      id="paypal-card-expiry"
-                      className="min-h-[48px] rounded-xl border border-gray-200 bg-white px-3 py-2"
-                    />
-
-                  </div>
-
-                  <div>
-
-                    <label className="mb-2 block text-xs font-bold text-gray-600">
-                      CVV
-                    </label>
-
-                    <div
-                      id="paypal-card-cvv"
-                      className="min-h-[48px] rounded-xl border border-gray-200 bg-white px-3 py-2"
-                    />
-
-                  </div>
-
-                </div>
-
-                {/* BILLING COUNTRY */}
-
-                <div className="mt-4">
-
-                  <label className="mb-2 block text-xs font-bold text-gray-600">
-                    Billing Country
-                  </label>
-
-                  <select
-                    value={
-                      billingCountryCode
-                    }
-                    onChange={(e) =>
-                      setBillingCountryCode(
-                        e.target.value
+                    className={`mt-4 break-words rounded-xl p-4 text-sm font-semibold ${
+                      paymentMessage.startsWith(
+                        "✅"
                       )
-                    }
-                    disabled={
-                      paymentLoading
-                    }
-                    className="h-12 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-800 outline-none transition focus:border-blue-500 disabled:bg-gray-100"
+                        ? "bg-green-50 text-green-700"
+                        : "bg-red-50 text-red-600"
+                    }`}
                   >
-                    <option value="GE">
-                      Georgia
-                    </option>
+                    {paymentMessage}
+                  </div>
+                )}
 
-                    <option value="US">
-                      United States
-                    </option>
+                {/* EXTRA SPACE BEFORE FOOTER */}
 
-                    <option value="GB">
-                      United Kingdom
-                    </option>
+                <div className="h-4 sm:h-5" />
 
-                    <option value="DE">
-                      Germany
-                    </option>
+              </div>
 
-                    <option value="FR">
-                      France
-                    </option>
+            </div>
 
-                    <option value="TR">
-                      Turkey
-                    </option>
+            {/* =================================================
+                FIXED CHECKOUT FOOTER
+            ================================================= */}
 
-                    <option value="AM">
-                      Armenia
-                    </option>
+            <div className="shrink-0 border-t border-gray-200 bg-white p-4 shadow-[0_-8px_20px_rgba(0,0,0,0.06)] sm:p-5">
 
-                    <option value="AZ">
-                      Azerbaijan
-                    </option>
+              <div className="mb-3 flex items-center justify-between gap-4">
 
-                    <option value="UA">
-                      Ukraine
-                    </option>
+                <div>
 
-                    <option value="PL">
-                      Poland
-                    </option>
+                  <p className="text-xs font-semibold text-gray-400">
+                    Total to pay
+                  </p>
 
-                    <option value="IT">
-                      Italy
-                    </option>
-
-                    <option value="ES">
-                      Spain
-                    </option>
-                  </select>
-
-                </div>
-
-                {/* BILLING POSTAL CODE */}
-
-                <div className="mt-4">
-
-                  <label className="mb-2 block text-xs font-bold text-gray-600">
-                    Billing Postal Code
-                  </label>
-
-                  <input
-                    type="text"
-                    value={
-                      billingPostalCode
-                    }
-                    onChange={(e) =>
-                      setBillingPostalCode(
-                        e.target.value
-                      )
-                    }
-                    disabled={
-                      paymentLoading
-                    }
-                    autoComplete="postal-code"
-                    placeholder="Example: 0105"
-                    className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-800 outline-none transition focus:border-blue-500 disabled:bg-gray-100"
-                  />
-
-                  <p className="mt-1 text-[11px] text-gray-400">
-                    Enter the postal code associated with your billing address.
+                  <p className="text-lg font-black text-gray-900">
+                    $
+                    {selectedPackage.price.toFixed(
+                      2
+                    )}
                   </p>
 
                 </div>
 
-                <button
-                  disabled={
-                    paymentLoading ||
-                    !paypalReady ||
-                    !cardFieldsReady ||
-                    !billingPostalCode.trim()
-                  }
-                  onClick={() =>
-                    payWithCard(
-                      selectedPackage
-                    )
-                  }
-                  className="mt-5 w-full rounded-xl bg-blue-600 py-3.5 text-sm font-black text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {paymentLoading
-                    ? "Processing Payment..."
-                    : !cardFieldsReady
-                    ? "Loading Card Fields..."
-                    : `Pay $${selectedPackage.price.toFixed(
-                        2
-                      )}`}
-                </button>
+                <div className="text-right">
+
+                  <p className="text-xs font-semibold text-gray-400">
+                    You receive
+                  </p>
+
+                  <p className="text-sm font-black text-blue-600">
+                    💎{" "}
+                    {selectedPackage.amount.toLocaleString()}{" "}
+                    Novux
+                  </p>
+
+                </div>
 
               </div>
 
-              {/* MESSAGE */}
+              <button
+                type="button"
+                disabled={
+                  paymentLoading ||
+                  !paypalReady ||
+                  !cardFieldsReady ||
+                  !billingPostalCode.trim() ||
+                  billingCountryCode.length !== 2
+                }
+                onClick={() =>
+                  payWithCard(
+                    selectedPackage
+                  )
+                }
+                className="w-full rounded-xl bg-blue-600 py-4 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 hover:shadow-blue-600/30 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {paymentLoading
+                  ? "Processing Payment..."
+                  : !paypalReady
+                  ? "Loading PayPal..."
+                  : !cardFieldsReady
+                  ? "Loading Card Fields..."
+                  : !billingPostalCode.trim()
+                  ? "Enter Billing Postal Code"
+                  : `Pay $${selectedPackage.price.toFixed(
+                      2
+                    )}`}
+              </button>
 
-              {paymentMessage && (
-                <div
-                  className={`mt-4 break-words rounded-xl p-4 text-sm font-semibold ${
-                    paymentMessage.startsWith(
-                      "✅"
-                    )
-                      ? "bg-green-50 text-green-700"
-                      : "bg-red-50 text-red-600"
-                  }`}
-                >
-                  {paymentMessage}
-                </div>
-              )}
-
-              {/* SECURITY */}
-
-              <div className="mt-5 text-center">
+              <div className="mt-3 text-center">
 
                 <p className="text-xs font-semibold text-gray-400">
                   🔒 Secure payment powered by PayPal
                 </p>
 
-                <p className="mt-1 text-[11px] text-gray-400">
+                <p className="mt-1 text-[11px] leading-4 text-gray-400">
                   Nova does not store your card number, expiry date, or CVV.
                 </p>
 
@@ -3087,6 +3431,7 @@ function NovuxPackage({
         </div>
 
         <button
+          type="button"
           onClick={onBuy}
           className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-black text-white transition hover:bg-blue-700"
         >
