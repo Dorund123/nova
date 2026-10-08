@@ -50,6 +50,18 @@ export default function HomePage() {
   const [cardFieldsReady, setCardFieldsReady] =
     useState(false);
 
+  /*
+  =========================================================
+  BILLING ADDRESS
+  =========================================================
+  */
+
+  const [billingPostalCode, setBillingPostalCode] =
+    useState("");
+
+  const [billingCountryCode, setBillingCountryCode] =
+    useState("GE");
+
   const paypalCardSessionRef =
     useRef<any>(null);
 
@@ -119,6 +131,10 @@ export default function HomePage() {
 
     script.onload = () => {
       if (window.paypal) {
+        console.log(
+          "PayPal SDK loaded successfully."
+        );
+
         setPaypalReady(true);
       }
     };
@@ -449,7 +465,7 @@ export default function HomePage() {
     } catch {
       console.error(
         "API returned non-JSON response:",
-        text.slice(0, 500)
+        text.slice(0, 1000)
       );
 
       throw new Error(
@@ -614,6 +630,11 @@ export default function HomePage() {
 
     const clientToken =
       await getPayPalClientToken();
+
+    console.log(
+      "Creating PayPal SDK instance with components:",
+      components
+    );
 
     const paypalInstance =
       await window.paypal.createInstance(
@@ -794,16 +815,76 @@ export default function HomePage() {
       null;
 
     try {
+      /*
+      =====================================================
+      1. CREATE PAYPAL CARD SDK INSTANCE
+      =====================================================
+      */
+
       const paypalInstance =
         await createPayPalInstance([
           "card-fields",
         ]);
+
+      /*
+      =====================================================
+      2. CHECK CARD ELIGIBILITY
+      =====================================================
+      */
+
+      console.log(
+        "Checking PayPal card eligibility..."
+      );
+
+      const paymentMethods =
+        await paypalInstance.findEligibleMethods(
+          {
+            currencyCode: "USD",
+          }
+        );
+
+      console.log(
+        "PayPal eligible payment methods:",
+        paymentMethods
+      );
+
+      const cardEligible =
+        paymentMethods?.isEligible?.(
+          "advanced_cards"
+        );
+
+      console.log(
+        "PayPal advanced_cards eligible:",
+        cardEligible
+      );
+
+      if (!cardEligible) {
+        setCardFieldsReady(false);
+
+        setPaymentMessage(
+          "Credit/debit card payments are not available for this PayPal account or region."
+        );
+
+        return;
+      }
+
+      /*
+      =====================================================
+      3. CREATE CARD PAYMENT SESSION
+      =====================================================
+      */
 
       const cardSession =
         paypalInstance.createCardFieldsOneTimePaymentSession();
 
       paypalCardSessionRef.current =
         cardSession;
+
+      /*
+      =====================================================
+      4. FIND CONTAINERS
+      =====================================================
+      */
 
       const numberContainer =
         document.getElementById(
@@ -837,9 +918,21 @@ export default function HomePage() {
         return;
       }
 
+      /*
+      =====================================================
+      5. CLEAR OLD FIELDS
+      =====================================================
+      */
+
       numberContainer.innerHTML = "";
       expiryContainer.innerHTML = "";
       cvvContainer.innerHTML = "";
+
+      /*
+      =====================================================
+      6. CREATE NUMBER FIELD
+      =====================================================
+      */
 
       const numberField =
         cardSession.createCardFieldsComponent(
@@ -850,6 +943,12 @@ export default function HomePage() {
           }
         );
 
+      /*
+      =====================================================
+      7. CREATE EXPIRY FIELD
+      =====================================================
+      */
+
       const expiryField =
         cardSession.createCardFieldsComponent(
           {
@@ -859,6 +958,12 @@ export default function HomePage() {
           }
         );
 
+      /*
+      =====================================================
+      8. CREATE CVV FIELD
+      =====================================================
+      */
+
       const cvvField =
         cardSession.createCardFieldsComponent(
           {
@@ -867,6 +972,12 @@ export default function HomePage() {
               "CVV",
           }
         );
+
+      /*
+      =====================================================
+      9. MOUNT FIELDS
+      =====================================================
+      */
 
       numberContainer.appendChild(
         numberField
@@ -880,6 +991,12 @@ export default function HomePage() {
         cvvField
       );
 
+      /*
+      =====================================================
+      10. READY
+      =====================================================
+      */
+
       setCardFieldsReady(true);
 
       console.log(
@@ -887,7 +1004,7 @@ export default function HomePage() {
       );
     } catch (error) {
       console.error(
-        "Card fields error:",
+        "Card fields setup error:",
         error
       );
 
@@ -935,6 +1052,49 @@ export default function HomePage() {
       return;
     }
 
+    /*
+    =====================================================
+    BILLING POSTAL CODE VALIDATION
+    =====================================================
+    */
+
+    const postalCode =
+      billingPostalCode.trim();
+
+    if (!postalCode) {
+      setPaymentMessage(
+        "Please enter your billing postal code."
+      );
+
+      return;
+    }
+
+    if (
+      postalCode.length < 3 ||
+      postalCode.length > 12
+    ) {
+      setPaymentMessage(
+        "Please enter a valid billing postal code."
+      );
+
+      return;
+    }
+
+    const countryCode =
+      billingCountryCode
+        .trim()
+        .toUpperCase();
+
+    if (
+      countryCode.length !== 2
+    ) {
+      setPaymentMessage(
+        "Please select a valid billing country."
+      );
+
+      return;
+    }
+
     setPaymentLoading(true);
     setPaymentMessage("");
 
@@ -957,12 +1117,46 @@ export default function HomePage() {
       =====================================================
       2. SUBMIT CARD PAYMENT
       =====================================================
+
+      IMPORTANT:
+
+      PayPal v6 allows billingAddress to be passed
+      to cardSession.submit().
+
+      This is used by PayPal for risk/SCA processing.
+      =====================================================
       */
+
+      console.log(
+        "Submitting PayPal Card Fields..."
+      );
+
+      console.log(
+        "Billing country:",
+        countryCode
+      );
+
+      console.log(
+        "Billing postal code:",
+        postalCode
+      );
 
       const result =
         await cardSession.submit(
-          orderID
+          orderID,
+          {
+            billingAddress: {
+              postalCode,
+              countryCode,
+            },
+          }
         );
+
+      /*
+      =====================================================
+      3. FULL RESULT
+      =====================================================
+      */
 
       console.log(
         "FULL CARD SUBMIT RESULT:",
@@ -971,7 +1165,7 @@ export default function HomePage() {
 
       /*
       =====================================================
-      3. READ STATE
+      4. READ STATE
       =====================================================
       */
 
@@ -985,7 +1179,7 @@ export default function HomePage() {
 
       /*
       =====================================================
-      4. GET FINAL ORDER ID
+      5. GET FINAL ORDER ID
       =====================================================
       */
 
@@ -1000,7 +1194,7 @@ export default function HomePage() {
 
       /*
       =====================================================
-      5. CANCELLED
+      6. CANCELLED
       =====================================================
       */
 
@@ -1016,7 +1210,7 @@ export default function HomePage() {
 
       /*
       =====================================================
-      6. FAILED
+      7. FAILED
       =====================================================
       */
 
@@ -1028,18 +1222,23 @@ export default function HomePage() {
           result
         );
 
+        console.error(
+          "PayPal Card Fields failure data:",
+          result?.data
+        );
+
         const paypalMessage =
           result?.data?.message;
 
         throw new Error(
           paypalMessage ||
-            "Card payment was not approved. Please check your card details and try again."
+            "Card payment was not approved. Please check your card details, billing postal code, and try again."
         );
       }
 
       /*
       =====================================================
-      7. UNKNOWN STATE
+      8. UNKNOWN STATE
       =====================================================
       */
 
@@ -1058,15 +1257,7 @@ export default function HomePage() {
 
       /*
       =====================================================
-      8. CARD PAYMENT SUCCEEDED
-      =====================================================
-
-      IMPORTANT:
-
-      DO NOT CAPTURE BEFORE THIS POINT.
-
-      PayPal requires the Card Fields submit
-      to succeed before capture.
+      9. SUCCESS
       =====================================================
       */
 
@@ -1081,7 +1272,7 @@ export default function HomePage() {
 
       /*
       =====================================================
-      9. CAPTURE ORDER
+      10. CAPTURE
       =====================================================
       */
 
@@ -1097,7 +1288,7 @@ export default function HomePage() {
 
       /*
       =====================================================
-      10. CHECK CAPTURE
+      11. CHECK CAPTURE
       =====================================================
       */
 
@@ -1113,7 +1304,7 @@ export default function HomePage() {
 
       /*
       =====================================================
-      11. PAYMENT COMPLETE
+      12. SUCCESS MESSAGE
       =====================================================
       */
 
@@ -1125,7 +1316,7 @@ export default function HomePage() {
 
       /*
       =====================================================
-      12. CLOSE MODAL
+      13. CLOSE
       =====================================================
       */
 
@@ -1138,6 +1329,8 @@ export default function HomePage() {
           null;
 
         setCardFieldsReady(false);
+
+        setBillingPostalCode("");
       }, 2500);
     } catch (error) {
       console.error(
@@ -1145,10 +1338,37 @@ export default function HomePage() {
         error
       );
 
-      setPaymentMessage(
+      /*
+      =====================================================
+      SHOW COMPLETE PAYPAL ERROR
+      =====================================================
+      */
+
+      let errorMessage =
+        "Card payment failed.";
+
+      if (
         error instanceof Error
-          ? error.message
-          : "Card payment failed."
+      ) {
+        errorMessage =
+          error.message;
+      } else {
+        try {
+          errorMessage =
+            JSON.stringify(error);
+        } catch {
+          errorMessage =
+            "Card payment failed.";
+        }
+      }
+
+      console.error(
+        "FINAL CARD ERROR:",
+        errorMessage
+      );
+
+      setPaymentMessage(
+        errorMessage
       );
     } finally {
       setPaymentLoading(false);
@@ -1174,6 +1394,10 @@ export default function HomePage() {
     setSelectedPackage(pkg);
 
     setPaymentMessage("");
+
+    setBillingPostalCode("");
+
+    setBillingCountryCode("GE");
 
     paypalCardSessionRef.current =
       null;
@@ -2109,6 +2333,8 @@ export default function HomePage() {
               setCardFieldsReady(false);
 
               setPaymentMessage("");
+
+              setBillingPostalCode("");
             }
           }}
         >
@@ -2162,6 +2388,8 @@ export default function HomePage() {
                     );
 
                     setPaymentMessage("");
+
+                    setBillingPostalCode("");
                   }}
                   className="rounded-xl px-3 py-2 text-xl text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
                 >
@@ -2288,11 +2516,117 @@ export default function HomePage() {
 
                 </div>
 
+                {/* BILLING COUNTRY */}
+
+                <div className="mt-4">
+
+                  <label className="mb-2 block text-xs font-bold text-gray-600">
+                    Billing Country
+                  </label>
+
+                  <select
+                    value={
+                      billingCountryCode
+                    }
+                    onChange={(e) =>
+                      setBillingCountryCode(
+                        e.target.value
+                      )
+                    }
+                    disabled={
+                      paymentLoading
+                    }
+                    className="h-12 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-800 outline-none transition focus:border-blue-500 disabled:bg-gray-100"
+                  >
+                    <option value="GE">
+                      Georgia
+                    </option>
+
+                    <option value="US">
+                      United States
+                    </option>
+
+                    <option value="GB">
+                      United Kingdom
+                    </option>
+
+                    <option value="DE">
+                      Germany
+                    </option>
+
+                    <option value="FR">
+                      France
+                    </option>
+
+                    <option value="TR">
+                      Turkey
+                    </option>
+
+                    <option value="AM">
+                      Armenia
+                    </option>
+
+                    <option value="AZ">
+                      Azerbaijan
+                    </option>
+
+                    <option value="UA">
+                      Ukraine
+                    </option>
+
+                    <option value="PL">
+                      Poland
+                    </option>
+
+                    <option value="IT">
+                      Italy
+                    </option>
+
+                    <option value="ES">
+                      Spain
+                    </option>
+                  </select>
+
+                </div>
+
+                {/* BILLING POSTAL CODE */}
+
+                <div className="mt-4">
+
+                  <label className="mb-2 block text-xs font-bold text-gray-600">
+                    Billing Postal Code
+                  </label>
+
+                  <input
+                    type="text"
+                    value={
+                      billingPostalCode
+                    }
+                    onChange={(e) =>
+                      setBillingPostalCode(
+                        e.target.value
+                      )
+                    }
+                    disabled={
+                      paymentLoading
+                    }
+                    autoComplete="postal-code"
+                    placeholder="Example: 0105"
+                    className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-800 outline-none transition focus:border-blue-500 disabled:bg-gray-100"
+                  />
+
+                  <p className="mt-1 text-[11px] text-gray-400">
+                    Enter the postal code associated with your billing address.
+                  </p>
+
+                </div>
+
                 <button
                   disabled={
                     paymentLoading ||
                     !paypalReady ||
-                    !cardFieldsReady
+                    !cardFieldsReady ||
+                    !billingPostalCode.trim()
                   }
                   onClick={() =>
                     payWithCard(
@@ -2316,7 +2650,7 @@ export default function HomePage() {
 
               {paymentMessage && (
                 <div
-                  className={`mt-4 rounded-xl p-4 text-sm font-semibold ${
+                  className={`mt-4 break-words rounded-xl p-4 text-sm font-semibold ${
                     paymentMessage.startsWith(
                       "✅"
                     )
