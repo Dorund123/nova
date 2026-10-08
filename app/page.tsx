@@ -47,12 +47,6 @@ export default function HomePage() {
   const [paymentMessage, setPaymentMessage] =
     useState("");
 
-  /*
-  =========================================================
-  CARD FIELDS READY
-  =========================================================
-  */
-
   const [cardFieldsReady, setCardFieldsReady] =
     useState(false);
 
@@ -468,16 +462,6 @@ export default function HomePage() {
   =========================================================
   GET PAYPAL CLIENT TOKEN
   =========================================================
-
-  /api/paypal/create-order/client-token
-
-  returns:
-
-  {
-    clientToken: "..."
-  }
-
-  =========================================================
   */
 
   async function getPayPalClientToken() {
@@ -784,21 +768,6 @@ export default function HomePage() {
   =========================================================
   CARD FIELDS
   =========================================================
-
-  IMPORTANT:
-
-  აქ აღარ ვამოწმებთ:
-
-  findEligibleMethods()
-
-  advanced_cards
-
-  რადგან სწორედ ეს ამოწმებდა და აბრუნებდა:
-
-  "Card payment is not available for this PayPal account."
-
-  ახლა პირდაპირ ვცდილობთ Card Fields-ის შექმნას.
-  =========================================================
   */
 
   async function setupCardFields(
@@ -830,23 +799,11 @@ export default function HomePage() {
           "card-fields",
         ]);
 
-      /*
-      =====================================================
-      CREATE CARD SESSION
-      =====================================================
-      */
-
       const cardSession =
         paypalInstance.createCardFieldsOneTimePaymentSession();
 
       paypalCardSessionRef.current =
         cardSession;
-
-      /*
-      =====================================================
-      FIND HTML CONTAINERS
-      =====================================================
-      */
 
       const numberContainer =
         document.getElementById(
@@ -880,21 +837,9 @@ export default function HomePage() {
         return;
       }
 
-      /*
-      =====================================================
-      CLEAR OLD FIELDS
-      =====================================================
-      */
-
       numberContainer.innerHTML = "";
       expiryContainer.innerHTML = "";
       cvvContainer.innerHTML = "";
-
-      /*
-      =====================================================
-      CREATE CARD NUMBER
-      =====================================================
-      */
 
       const numberField =
         cardSession.createCardFieldsComponent(
@@ -905,12 +850,6 @@ export default function HomePage() {
           }
         );
 
-      /*
-      =====================================================
-      CREATE EXPIRY
-      =====================================================
-      */
-
       const expiryField =
         cardSession.createCardFieldsComponent(
           {
@@ -920,12 +859,6 @@ export default function HomePage() {
           }
         );
 
-      /*
-      =====================================================
-      CREATE CVV
-      =====================================================
-      */
-
       const cvvField =
         cardSession.createCardFieldsComponent(
           {
@@ -934,12 +867,6 @@ export default function HomePage() {
               "CVV",
           }
         );
-
-      /*
-      =====================================================
-      ADD FIELDS TO PAGE
-      =====================================================
-      */
 
       numberContainer.appendChild(
         numberField
@@ -952,12 +879,6 @@ export default function HomePage() {
       cvvContainer.appendChild(
         cvvField
       );
-
-      /*
-      =====================================================
-      CARD FIELDS READY
-      =====================================================
-      */
 
       setCardFieldsReady(true);
 
@@ -1020,16 +941,21 @@ export default function HomePage() {
     try {
       /*
       =====================================================
-      CREATE ORDER
+      1. CREATE PAYPAL ORDER
       =====================================================
       */
 
       const orderID =
         await createPayPalOrder(pkg);
 
+      console.log(
+        "Created PayPal card order:",
+        orderID
+      );
+
       /*
       =====================================================
-      SUBMIT CARD
+      2. SUBMIT CARD PAYMENT
       =====================================================
       */
 
@@ -1039,24 +965,123 @@ export default function HomePage() {
         );
 
       console.log(
-        "Card submit result:",
+        "FULL CARD SUBMIT RESULT:",
         result
       );
 
       /*
       =====================================================
-      GET FINAL ORDER ID
+      3. READ STATE
+      =====================================================
+      */
+
+      const state =
+        result?.state;
+
+      console.log(
+        "PayPal Card Fields state:",
+        state
+      );
+
+      /*
+      =====================================================
+      4. GET FINAL ORDER ID
       =====================================================
       */
 
       const finalOrderID =
         result?.data?.orderId ||
-        result?.orderId ||
         orderID;
+
+      console.log(
+        "Final PayPal order ID:",
+        finalOrderID
+      );
 
       /*
       =====================================================
-      CAPTURE ORDER
+      5. CANCELLED
+      =====================================================
+      */
+
+      if (
+        state === "canceled"
+      ) {
+        setPaymentMessage(
+          "Payment was cancelled."
+        );
+
+        return;
+      }
+
+      /*
+      =====================================================
+      6. FAILED
+      =====================================================
+      */
+
+      if (
+        state === "failed"
+      ) {
+        console.error(
+          "PayPal Card Fields payment failed:",
+          result
+        );
+
+        const paypalMessage =
+          result?.data?.message;
+
+        throw new Error(
+          paypalMessage ||
+            "Card payment was not approved. Please check your card details and try again."
+        );
+      }
+
+      /*
+      =====================================================
+      7. UNKNOWN STATE
+      =====================================================
+      */
+
+      if (
+        state !== "succeeded"
+      ) {
+        console.error(
+          "Unexpected PayPal Card Fields result:",
+          result
+        );
+
+        throw new Error(
+          "PayPal could not confirm your card payment. Please try again."
+        );
+      }
+
+      /*
+      =====================================================
+      8. CARD PAYMENT SUCCEEDED
+      =====================================================
+
+      IMPORTANT:
+
+      DO NOT CAPTURE BEFORE THIS POINT.
+
+      PayPal requires the Card Fields submit
+      to succeed before capture.
+      =====================================================
+      */
+
+      console.log(
+        "Card payment succeeded."
+      );
+
+      console.log(
+        "Now capturing order:",
+        finalOrderID
+      );
+
+      /*
+      =====================================================
+      9. CAPTURE ORDER
       =====================================================
       */
 
@@ -1065,24 +1090,55 @@ export default function HomePage() {
           finalOrderID
         );
 
-      if (capture.success) {
-        setPaymentMessage(
-          `✅ Payment completed! ${pkg.amount.toLocaleString()} Novux will be added to your balance.`
+      console.log(
+        "Capture result:",
+        capture
+      );
+
+      /*
+      =====================================================
+      10. CHECK CAPTURE
+      =====================================================
+      */
+
+      if (
+        !capture ||
+        !capture.success
+      ) {
+        throw new Error(
+          capture?.error ||
+            "Payment was approved, but Nova could not complete the purchase."
         );
-
-        await loadUser();
-
-        setTimeout(() => {
-          setSelectedPackage(null);
-
-          setPaymentMessage("");
-
-          paypalCardSessionRef.current =
-            null;
-
-          setCardFieldsReady(false);
-        }, 2500);
       }
+
+      /*
+      =====================================================
+      11. PAYMENT COMPLETE
+      =====================================================
+      */
+
+      setPaymentMessage(
+        `✅ Payment completed! ${pkg.amount.toLocaleString()} Novux will be added to your balance.`
+      );
+
+      await loadUser();
+
+      /*
+      =====================================================
+      12. CLOSE MODAL
+      =====================================================
+      */
+
+      setTimeout(() => {
+        setSelectedPackage(null);
+
+        setPaymentMessage("");
+
+        paypalCardSessionRef.current =
+          null;
+
+        setCardFieldsReady(false);
+      }, 2500);
     } catch (error) {
       console.error(
         "Card payment error:",
@@ -1527,7 +1583,7 @@ export default function HomePage() {
 
           </section>
 
-          {/* NOVUX UPGRADER */}
+          {/* NOVA UPGRADER */}
 
           <section className="mb-12">
 
