@@ -101,9 +101,9 @@ export async function POST(request: Request) {
     const auth = Buffer.from(`${projectId}:${apiKey}`).toString("base64");
 
     const xsollaResponse = await fetch(
-      `https://store.xsolla.com/api/v2/project/${encodeURIComponent(
+      `https://store.xsolla.com/api/v3/project/${encodeURIComponent(
         projectId!
-      )}/user/${encodeURIComponent(user.id)}/token`,
+      )}/admin/payment/token`,
       {
         method: "POST",
         headers: {
@@ -128,6 +128,9 @@ export async function POST(request: Request) {
           user: {
             id: {
               value: user.id,
+            },
+            country: {
+              value: "GE",
             },
           },
         }),
@@ -162,6 +165,11 @@ export async function POST(request: Request) {
             result?.errorMessage ||
             result?.message ||
             "Xsolla could not create a checkout session.",
+          xsollaStatus: xsollaResponse.status,
+          xsollaErrorCode: result?.errorCode,
+          xsollaErrorMessage:
+            result?.errorMessage || result?.message,
+          xsollaErrorDetails: result?.errors,
         },
         { status: 502 }
       );
@@ -173,17 +181,14 @@ export async function POST(request: Request) {
       console.error("Xsolla response did not contain a checkout token.");
 
       return NextResponse.json(
-        {
-          success: false,
-          error: "Xsolla did not return a checkout token.",
-        },
+        { success: false, error: "Xsolla did not return a checkout token." },
         { status: 502 }
       );
     }
 
     return NextResponse.json({
       success: true,
-      checkoutUrl: `https://store.xsolla.com/?token=${encodeURIComponent(
+      checkoutUrl: `https://secure.xsolla.com/paystation4/?token=${encodeURIComponent(
         token
       )}`,
     });
